@@ -130,7 +130,7 @@ void CdusBackstepping::updateVelocitySp() {
 }
 
 void CdusBackstepping::updateYawRateSp() {
-	_omega_z_sp = -_omega_z_scale * _manual_control.yaw;
+	_omega_z_sp = _omega_z_scale * _manual_control.yaw;
 }
 
 /* Backstepping specific equations */
@@ -160,7 +160,7 @@ void CdusBackstepping::computeThrust()
 
 	_thrust_sp(0) = 0.0;
 	_thrust_sp(1) = 0.0;
-	_thrust_sp(2) = thrust;
+	_thrust_sp(2) = -thrust;
 }
 
 void CdusBackstepping::computeYawTorque()
@@ -208,7 +208,7 @@ void CdusBackstepping::computeRollTorque()
 	const float q_v3 = _q_att(3);
 
 	// In your ROS code: T = -_thrust_sp(2) (thrust positive upward)
-	const float T = _thrust_sp(2);
+	const float T = -_thrust_sp(2);
 
 	auto sq   = [](float x) { return x * x; };
 	auto cube = [](float x) { return x * x * x; };
@@ -337,7 +337,7 @@ void CdusBackstepping::computePitchTorque()
 	const float q_v2 = _q_att(2);
 	const float q_v3 = _q_att(3);
 
-	const float T = _thrust_sp(2);
+	const float T = -_thrust_sp(2);
 
 	auto sq   = [](float x) { return x * x; };
 	auto cube = [](float x) { return x * x * x; };

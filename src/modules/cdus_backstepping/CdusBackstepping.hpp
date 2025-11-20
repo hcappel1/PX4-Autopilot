@@ -104,7 +104,7 @@ private:
 	float _omega_z_sp{0.0f};
 
 	float _vel_scale{2.0f};
-	float _omega_z_scale{0.5f};
+	float _omega_z_scale{1.0f};
 
 	
 };
