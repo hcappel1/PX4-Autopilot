@@ -95,7 +95,6 @@ private:
 	Vector3f _k_p{0.1f, 0.1f, 0.05f};   // P gains roll, pitch, yaw
 	Vector3f _k_i{0.05f, 0.05f, 0.02f}; // I gains roll, pitch, yaw
 	Vector3f _k_d{0.002f, 0.002f, 0.001f}; // D gains roll, pitch, yaw
-
 	// integrator limit (absolute value for each axis)
 	float _integrator_limit{0.5f};
 };
