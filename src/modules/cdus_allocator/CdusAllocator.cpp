@@ -78,13 +78,13 @@ void CdusAllocator::init_effectiveness_matrix_duct()
 
     allocation_matrix_ducted(1,0) = 0.0f;
     allocation_matrix_ducted(1,1) = 0.0f;
-    allocation_matrix_ducted(1,2) = -0.00038f;
-    allocation_matrix_ducted(1,3) = 0.00105f;
+    allocation_matrix_ducted(1,2) = -0.00031f;
+    allocation_matrix_ducted(1,3) = 0.00135f;
 
     allocation_matrix_ducted(2,0) = 0.0f;
     allocation_matrix_ducted(2,1) = 0.0f;
-    allocation_matrix_ducted(2,2) = 0.00072f;
-    allocation_matrix_ducted(2,3) = 0.00040f;
+    allocation_matrix_ducted(2,2) = 0.00055f;
+    allocation_matrix_ducted(2,3) = 0.00079f;
 
     allocation_matrix_ducted(3,0) = 0.00030f;
     allocation_matrix_ducted(3,1) = -0.00030f;
