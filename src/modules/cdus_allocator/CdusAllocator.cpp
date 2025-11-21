@@ -10,8 +10,8 @@ CdusAllocator::CdusAllocator() :
 	ModuleParams(nullptr),
 	ScheduledWorkItem(MODULE_NAME, px4::wq_configurations::rate_ctrl)
 {
-	init_effectiveness_matrix();
-
+	// init_effectiveness_matrix();
+	init_effectiveness_matrix_duct();
 	if (!_torque_sp_sub.registerCallback()) {
 		PX4_WARN("Callback registration failed");
 	}
@@ -71,19 +71,30 @@ CdusAllocator::CdusAllocator() :
 
 void CdusAllocator::init_effectiveness_matrix_duct()
 {
-	// Create initial allocation matrix for the ducted vehicle 
-	matrix::Matrix<float, 4, 4> allocation_matrix_ducted;
-	Matrix4f = allocation_matrix_ducted = {
-		{ 0.01037f,  0.00967f, 0.0f, 0.0f}, // Thrust 
-		{ 0.0f, 0.0f, -0.00038f,  0.00105f}, // Roll
-		{ 0.0f, 0.0f, 0.00072f,  0.00040f}, // Pitch 
-		{ 0.00030f,  -0.00030f, 0.0f,  0.0f} // Yaw
-	};
+    allocation_matrix_ducted(0,0) = 0.01037f;
+    allocation_matrix_ducted(0,1) = 0.00967f;
+    allocation_matrix_ducted(0,2) = 0.0f;
+    allocation_matrix_ducted(0,3) = 0.0f;
+
+    allocation_matrix_ducted(1,0) = 0.0f;
+    allocation_matrix_ducted(1,1) = 0.0f;
+    allocation_matrix_ducted(1,2) = -0.00038f;
+    allocation_matrix_ducted(1,3) = 0.00105f;
+
+    allocation_matrix_ducted(2,0) = 0.0f;
+    allocation_matrix_ducted(2,1) = 0.0f;
+    allocation_matrix_ducted(2,2) = 0.00072f;
+    allocation_matrix_ducted(2,3) = 0.00040f;
+
+    allocation_matrix_ducted(3,0) = 0.00030f;
+    allocation_matrix_ducted(3,1) = -0.00030f;
+    allocation_matrix_ducted(3,2) = 0.0f;
+    allocation_matrix_ducted(3,3) = 0.0f;
 }
 
-{
-	_hover_thrust = hover_thrust;
-}
+// {
+// 	_hover_thrust = hover_thrust;
+// }
 
 // void CdusAllocator::normalize_allocation_matrix() {
 // 	int num_non_zero_roll_torque = 0;
@@ -166,7 +177,8 @@ void CdusAllocator::init_effectiveness_matrix_duct()
 // 	}
 // }
 
-// void CdusAllocator::Run()
+void CdusAllocator::Run()
+{ // Commented out code for Quad Run function and added in Ducted Run function
 // {
 // 	if (should_exit()) {
 // 		_torque_sp_sub.unregisterCallback();
@@ -234,10 +246,7 @@ void CdusAllocator::init_effectiveness_matrix_duct()
 // 	// );
 
 // 	_actuator_motors_pub.publish(out);
-// }
 
-void CdusAllocator::Run_ducted()
-{
 	if (should_exit()) {
 		_torque_sp_sub.unregisterCallback();
 		exit_and_cleanup();
@@ -281,11 +290,10 @@ void CdusAllocator::Run_ducted()
 	desired(3) = thrust_sp.xyz[2]; // Thrust Command 
 
 	// Take Psuedo-Inverse of the allocation matrix to get the mixer matrix
-	matrix::Matrix<float, 4, 4> mixer_matrix;
 	matrix::geninv(allocation_matrix_ducted,mixer_matrix);
 	
 	Vector4f Raw_PWM; // Empty vector to hold raw PWM values
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < NUM_MOTORS; ++i) {
       Raw_PWM(i) = mixer_matrix(i,0)*desired(0)
           + mixer_matrix(i,1)*desired(1)
           + mixer_matrix(i,2)*desired(2)
@@ -297,10 +305,10 @@ void CdusAllocator::Run_ducted()
     Vector4f delta_pwm_norm; 
 
     // Calculate delta PWM norm for each motor (PWM0 -> UR || PWM1 -> LR || PWM2 -> S1 || PWM3 -> S2)
-    delta_pwm_norm(0) = clip((delta_pwm(0)/800.f), -1.f, 1.f); // Motor 1 
-    delta_pwm_norm(1) = clip((delta_pwm(1)/800.f) , -1.f, 1.f); // Motor 2
-    delta_pwm_norm(2) = clip((delta_pwm(2)/400.f) , -1.f, 1.f); // Servo 1  
-    delta_pwm_norm(3) = clip((delta_pwm(3)/400.f), -1.f, 1.f); // Servo 2
+	delta_pwm_norm(0) = math::constrain(delta_pwm(0) / 800.f, -1.f, 1.f); // Motor 1
+	delta_pwm_norm(1) = math::constrain(delta_pwm(1) / 800.f, -1.f, 1.f); // Motor 2
+	delta_pwm_norm(2) = math::constrain(delta_pwm(2) / 400.f, -1.f, 1.f); // Servo 1
+	delta_pwm_norm(3) = math::constrain(delta_pwm(3) / 400.f, -1.f, 1.f); // Servo 2
 
     // Now add delta_pwm_norm with pwm_trim values and output as acutator_sp and         
     // clamp to [0,1] (single clamp is enough)
@@ -341,6 +349,112 @@ void CdusAllocator::Run_ducted()
 
 	_actuator_motors_pub.publish(out);
 }
+// }
+
+// void CdusAllocator::Run_ducted()
+// {
+// 	if (should_exit()) {
+// 		_torque_sp_sub.unregisterCallback();
+// 		exit_and_cleanup();
+// 		return;
+// 	}
+
+// 	vehicle_status_s vehicle_status{};
+// 	if (_vehicle_status_sub.update(&vehicle_status)) {
+// 		_armed = (vehicle_status.arming_state == vehicle_status_s::ARMING_STATE_ARMED);
+// 	}
+
+// 	vehicle_control_mode_s vcm{};
+// 	if (_vehicle_control_mode_sub.update(&vcm)) {
+// 		_rate_control_enabled = vcm.flag_control_rates_enabled;
+// 	}
+
+// 	// Disarmed or not in rate control => publish zero motors (FAILSAFE CONDITION)
+// 	if (!_armed || !_rate_control_enabled) {
+// 		actuator_motors_s out{};
+// 		out.timestamp = hrt_absolute_time();
+// 		for (int i = 0; i < NUM_MOTORS; i++) { out.control[i] = 0.f; }
+// 		_actuator_motors_pub.publish(out);
+// 		return;
+// 	}
+	
+// 	// For the case where the vehicle is not disarmed and is in rate control 
+// 	// Update the torque and thrust setpoints
+// 	vehicle_torque_setpoint_s torque_sp{};
+// 	if (!_torque_sp_sub.update(&torque_sp)) {
+// 		return;
+// 	}
+
+// 	vehicle_thrust_setpoint_s thrust_sp{};
+// 	_thrust_sp_sub.copy(&thrust_sp);
+
+// 	// Build desired vector
+// 	Vector<float, 4> desired{};
+// 	desired(0) = torque_sp.xyz[0]; // Roll Command 
+// 	desired(1) = torque_sp.xyz[1]; // Pitch Command 
+// 	desired(2) = torque_sp.xyz[2]; // Yaw Command 
+// 	desired(3) = thrust_sp.xyz[2]; // Thrust Command 
+
+// 	// Take Psuedo-Inverse of the allocation matrix to get the mixer matrix
+// 	matrix::geninv(allocation_matrix_ducted,mixer_matrix);
+	
+// 	Vector4f Raw_PWM; // Empty vector to hold raw PWM values
+//     for (int i = 0; i < NUM_MOTORS; ++i) {
+//       Raw_PWM(i) = mixer_matrix(i,0)*desired(0)
+//           + mixer_matrix(i,1)*desired(1)
+//           + mixer_matrix(i,2)*desired(2)
+//           + mixer_matrix(i,3)*desired(3);
+//     }
+
+// 	// Now, normalize delta PWM values 
+//     Vector4f delta_pwm(Raw_PWM(0), Raw_PWM(1), Raw_PWM(2), Raw_PWM(3));
+//     Vector4f delta_pwm_norm; 
+
+//     // Calculate delta PWM norm for each motor (PWM0 -> UR || PWM1 -> LR || PWM2 -> S1 || PWM3 -> S2)
+// 	delta_pwm_norm(0) = math::constrain(delta_pwm(0) / 800.f, -1.f, 1.f); // Motor 1
+// 	delta_pwm_norm(1) = math::constrain(delta_pwm(1) / 800.f, -1.f, 1.f); // Motor 2
+// 	delta_pwm_norm(2) = math::constrain(delta_pwm(2) / 400.f, -1.f, 1.f); // Servo 1
+// 	delta_pwm_norm(3) = math::constrain(delta_pwm(3) / 400.f, -1.f, 1.f); // Servo 2
+
+//     // Now add delta_pwm_norm with pwm_trim values and output as acutator_sp and         
+//     // clamp to [0,1] (single clamp is enough)
+
+//     // For mapping in QGC, _pwm_commands(0) --> Channel 1 (Motor 1 -- Upper Rotor) MAPS TO -----> delta_pwm_norm[0] 
+//     // For mapping in QGC, _pwm_commands(1) --> Channel 2 (Motor 2 -- Lower Rotor) MAPS TO -----> delta_pwm_norm[1] 
+//     // For mapping in QGC, _pwm_commands(2) --> Channel 3 (Motor 3 -- Servo 1) MAPS TO -----> delta_pwm_norm[2] 
+//     // For mapping in QGC, _pwm_commands(3) --> Channel 4 (Motor 4 -- Servo 2) MAPS TO -----> delta_pwm_norm[3] 
+
+// 	Vector4f actuator_trim(0.6f, 0.6f, 0.5f, 0.5f); // Set PWM Trim Values (Normalized 0 to 1) [Upper Rotor, Lower Rotor, Servo 1, Servo 2]
+
+//     Vector4f _pwm_commands; 
+//     // Assign PWM Commands 
+//     _pwm_commands(0) = delta_pwm_norm(0) + actuator_trim(0); // Upper Rotor
+//     _pwm_commands(1) = delta_pwm_norm(1) + actuator_trim(1); // Lower Rotor
+//     _pwm_commands(2) = delta_pwm_norm(2) + actuator_trim(2); // Servo 1
+//     _pwm_commands(3) = delta_pwm_norm(3) + actuator_trim(3); // Servo 2 
+
+// 	actuator_motors_s out{};
+// 	out.timestamp = hrt_absolute_time();
+
+// 	// PX4 Check for infinite comamnds and saturate all values below 0 to 0 and all values above 1 to 1; If not send pwm_commands through
+// 	for (int i = 0; i < NUM_MOTORS; i++) {
+// 		float cmd = _pwm_commands(i);
+// 		if (!PX4_ISFINITE(cmd)) cmd = 0.f;
+// 		if (cmd < 0.f) cmd = 0.f;
+// 		if (cmd > 1.f) cmd = 1.f;
+// 		out.control[i] = cmd;
+// 	}	
+
+// 	// PX4_INFO("Motor cmds: %.3f %.3f %.3f %.3f %.3f",
+//     //      (double)out.control[0],
+//     //      (double)out.control[1],
+//     //      (double)out.control[2],
+//     //      (double)out.control[3],
+// 	//  (double)_hover_thrust
+// 	// );
+
+// 	_actuator_motors_pub.publish(out);
+// }
 
 int CdusAllocator::task_spawn(int argc, char *argv[])
 {

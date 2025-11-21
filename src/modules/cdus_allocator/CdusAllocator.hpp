@@ -2,6 +2,8 @@
  * CdusAllocator.hpp
  *
  * Simple quadcopter control allocation module
+
+  * Currently updated to support Ducted Drone Vehicle 
  *
  * - Hard-coded quad geometry
  * - Pseudo-inverse allocator
@@ -27,6 +29,7 @@
 #include <uORB/topics/hover_thrust_estimate.h>
 
 #include <lib/matrix/matrix/math.hpp>
+#include <lib/matrix/matrix/Matrix.hpp>
 
 using namespace matrix;
 
@@ -52,8 +55,9 @@ public:
 
 private:
 
-	void init_effectiveness_matrix();
-	void normalize_allocation_matrix();
+	//void init_effectiveness_matrix();
+	//void normalize_allocation_matrix();
+	void init_effectiveness_matrix_duct();
 
 	// Subscriptions
 	uORB::SubscriptionCallbackWorkItem _torque_sp_sub{
@@ -68,10 +72,14 @@ private:
 	// Publication
 	uORB::Publication<actuator_motors_s> _actuator_motors_pub{ORB_ID(actuator_motors)};
 
-	// Effectiveness matrix and pseudoinverse
-	matrix::Matrix<float, 4, NUM_MOTORS> _B{};
-	matrix::Matrix<float, NUM_MOTORS, 4> _B_pinv{};
-	matrix::Vector<float, NUM_MOTORS> _control_allocation_scale;
+	// // Effectiveness matrix and pseudoinverse
+	// matrix::Matrix<float, 4, NUM_MOTORS> _B{};
+	// matrix::Matrix<float, NUM_MOTORS, 4> _B_pinv{};
+	// matrix::Vector<float, NUM_MOTORS> _control_allocation_scale;
+
+	//Ducted mixer matrix
+	matrix::Matrix<float, 4, 4> allocation_matrix_ducted; // Effectiveness matrix
+	matrix::Matrix<float, 4, 4> mixer_matrix; // Inverted Mixer Matrix 
 
 	bool _armed{false};
 	bool _rate_control_enabled{false};
