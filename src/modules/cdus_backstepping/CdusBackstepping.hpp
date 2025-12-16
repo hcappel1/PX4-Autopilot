@@ -87,7 +87,8 @@ private:
 
 	// Outputs
 	matrix::Vector3f _torque_sp{0.f, 0.f, 0.f};  // [L, M, N] (N*m)
-	matrix::Vector3f _thrust_sp{0.f, 0.f, 0.f};  // typically thrust in N or normalized
+	matrix::Vector3f _thrust_sp{0.f, 0.f, 0.f};  // PX4 thrust setpoint (N) - Calcuated from mc_pos_control 
+	matrix::Vector3f _thrust_backstepping{0.f, 0.f, 0.f};  // Thrust used in Roll and Pitch Backstepping Equations 
 
 	uint64_t _last_run{0};                  // last timestamp_sample [µs]
 
