@@ -96,7 +96,14 @@ void CdusBackstepping::Run()
 	}
 
 	// Get thrust and torque through backstepping equations
-	computeThrust();
+
+    // Check if attitude setpoint updated and grab thrust if it did
+    if (_attitude_setpoint_sub.updated()) {
+        _attitude_setpoint_sub.copy(&_attitude_sp);
+        _thrust_sp(2) = _attitude_sp.thrust_body[2];
+    }
+
+	// Calculate Torques 
 	computeYawTorque();
 	computeRollTorque();
 	computePitchTorque();
@@ -135,34 +142,34 @@ void CdusBackstepping::updateYawRateSp() {
 }
 
 /* Backstepping specific equations */
-void CdusBackstepping::computeThrust()
-{
-	const float g = 9.81f;
+// void CdusBackstepping::computeThrust()
+// {
+// 	const float g = 9.81f;
 
-	// VI_z is NED velocity z, VI_zc is its setpoint
-	const float VI_z  = _vel_est_ned(2);
-	const float VI_zc = _vel_sp_ned(2);
+// 	// VI_z is NED velocity z, VI_zc is its setpoint
+// 	const float VI_z  = _vel_est_ned(2);
+// 	const float VI_zc = _vel_sp_ned(2);
 
-	// Numerator
-	const float top = -(_mass * (g - _Cd * VI_z + _Kv * (VI_z - VI_zc)));
+// 	// Numerator
+// 	const float top = -(_mass * (g - _Cd * VI_z + _Kv * (VI_z - VI_zc)));
 
-	// Denominator using attitude quaternion: q = [w, x, y, z]
-	const float q1 = _q_att(1);
-	const float q2 = _q_att(2);
+// 	// Denominator using attitude quaternion: q = [w, x, y, z]
+// 	const float q1 = _q_att(1);
+// 	const float q2 = _q_att(2);
 
-	const float bottom = (q1 * q1 * 2.0f + q2 * q2 * 2.0f - 1.0f);
+// 	const float bottom = (q1 * q1 * 2.0f + q2 * q2 * 2.0f - 1.0f);
 
-	// Avoid divide-by-zero; if bottom is very small, return 0 thrust
-	if (std::fabs(bottom) < 1e-6f) {
-		return;
-	}
+// 	// Avoid divide-by-zero; if bottom is very small, return 0 thrust
+// 	if (std::fabs(bottom) < 1e-6f) {
+// 		return;
+// 	}
 
-	const float thrust = top / bottom; // positive upward [N]
+// 	const float thrust = top / bottom; // positive upward [N]
 
-	_thrust_sp(0) = 0.0;
-	_thrust_sp(1) = 0.0;
-	_thrust_sp(2) = -thrust;
-}
+// 	_thrust_sp(0) = 0.0;
+// 	_thrust_sp(1) = 0.0;
+// 	_thrust_sp(2) = -thrust;
+// }
 
 void CdusBackstepping::computeYawTorque()
 {

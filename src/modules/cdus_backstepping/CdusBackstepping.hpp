@@ -12,6 +12,7 @@
 #include <uORB/topics/vehicle_control_mode.h>
 #include <uORB/topics/vehicle_local_position.h>
 #include <uORB/topics/vehicle_attitude.h>
+#include <uORB/topics/vehicle_attitude_setpoint.h>
 #include <uORB/topics/vehicle_angular_velocity.h>
 #include <uORB/topics/vehicle_torque_setpoint.h>
 #include <uORB/topics/vehicle_thrust_setpoint.h>
@@ -54,6 +55,7 @@ private:
     uORB::Subscription _control_mode_sub{ORB_ID(vehicle_control_mode)};
 	uORB::Subscription _local_position_sub{ORB_ID(vehicle_local_position)};
 	uORB::Subscription _attitude_sub{ORB_ID(vehicle_attitude)};
+	uORB::Subscription _attitude_setpoint_sub{ORB_ID(vehicle_attitude_setpoint)};
 	uORB::SubscriptionCallbackWorkItem _angular_velocity_sub{this, ORB_ID(vehicle_angular_velocity)};
 
 	// uORB publications
@@ -74,6 +76,7 @@ private:
 	manual_control_setpoint_s   _manual_control{};
 	vehicle_local_position_s    _local_position{};
 	vehicle_attitude_s          _attitude{};
+	vehicle_attitude_setpoint_s _attitude_sp{};
 	vehicle_angular_velocity_s  _angular_velocity{};
 
 	// Controller I/O 
