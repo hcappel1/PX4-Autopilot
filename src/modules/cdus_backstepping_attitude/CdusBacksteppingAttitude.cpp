@@ -128,7 +128,7 @@ void CdusBacksteppingAttitude::Run()
 	if (_manual_control_sub.updated()) {
 		_manual_control_sub.copy(&_manual_control);
 		updateYawRateSp();
-		// updateAttitudeWithYaw(dt);
+		updateAttitudeWithYaw(dt);
 	}
 
     calcRollTorque();
