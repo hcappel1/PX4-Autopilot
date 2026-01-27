@@ -48,6 +48,19 @@ void CdusBacksteppingAttitude::parameters_updated() {
 	_Izz = _param_bsa_izz.get();
 }
 
+void CdusBacksteppingAttitude::resetYawInit(uint64_t now)
+{
+    _yaw_initialized = false;
+    _yaw_sp = 0.f;
+
+    // reset timing gates
+    _first_run = now;   // if you use this for "t_from_start"
+
+    // if you also want to restart dt cleanly:
+    // _last_run = now;
+
+    // any other per-arm/disarm init you need
+}
 
 void CdusBacksteppingAttitude::Run()
 {
@@ -67,7 +80,6 @@ void CdusBacksteppingAttitude::Run()
 		parameters_updated();
 	}
 
-
     vehicle_angular_velocity_s angular_velocity{};
 
 	// Run only when we have a new gyro sample
@@ -80,6 +92,7 @@ void CdusBacksteppingAttitude::Run()
 	// Compute dt from gyro sample timestamps (in seconds)
 	if (_last_run == 0) {
 		_last_run = now;
+		_first_run = now;
 		return; // wait one cycle to get a valid dt
 	}
 
@@ -89,12 +102,21 @@ void CdusBacksteppingAttitude::Run()
 	// Guard against unreasonable dt values
 	dt = constrain(dt, 0.0005f, 0.02f);
 
+	if (_vehicle_status_sub.update(&_vehicle_status)) {
+		const bool armed = (_vehicle_status.arming_state == vehicle_status_s::ARMING_STATE_ARMED);
+
+		if (armed != _armed_prev) {
+			resetYawInit(now);
+			_armed_prev = armed;
+		}
+	}
+
 	// Current body rates and acceleration
 	_rates_body(0) = angular_velocity.xyz[0];
 	_rates_body(1) = angular_velocity.xyz[1];
 	_rates_body(2) = angular_velocity.xyz[2];
 
-    	// Local position & velocity (NED)
+    // Local position & velocity (NED)
 	if (_local_position_sub.updated()) {
 		_local_position_sub.copy(&_local_position);
 
@@ -113,22 +135,51 @@ void CdusBacksteppingAttitude::Run()
 			       _attitude.q[3]);
 	}
 
-    // Attitude setpoint (quaternion)
-    if (_attitude_setpoint_sub.updated()) {
-        _attitude_setpoint_sub.copy(&_attitude_sp);
+	if (_attitude_setpoint_sub.updated()) {
+		_attitude_setpoint_sub.copy(&_attitude_sp);
 
-        _q_att_sp = matrix::Quatf(_attitude_sp.q_d[0],
-                        _attitude_sp.q_d[1],
-                        _attitude_sp.q_d[2],
-                        _attitude_sp.q_d[3]);
-        _thrust_sp(2) = _attitude_sp.thrust_body[2];
-    }
+		const matrix::Quatf q_rp(_attitude_sp.q_d[0],
+								_attitude_sp.q_d[1],
+								_attitude_sp.q_d[2],
+								_attitude_sp.q_d[3]);
+
+		matrix::Eulerf rpy(q_rp);
+
+		if(!_yaw_initialized) {
+			float t_from_start = (now - _first_run)*1e-6;
+			if(fabs(rpy(2)) > 0.f && t_from_start > 3.f) {
+				_yaw_initialized = true;
+			}
+
+			_q_att_sp = matrix::Quatf(matrix::Eulerf(rpy(0), rpy(1), rpy(2)));
+			_q_att_sp.normalize();
+			_yaw_sp = rpy(2);
+		} else {
+			_q_att_sp = matrix::Quatf(matrix::Eulerf(rpy(0), rpy(1), _yaw_sp));
+			_q_att_sp.normalize();
+		}
+
+		if(_constrain_yaw) {
+			_q_att_sp = matrix::Quatf(matrix::Eulerf(rpy(0), rpy(1), rpy(2)));
+			_q_att_sp.normalize();
+		}
+
+		_thrust_sp(2) = _attitude_sp.thrust_body[2];
+
+		// DEBUG
+		// matrix::Eulerf rpy2(_q_att_sp);
+
+		// PX4_INFO("att_sp RPY [rad]: roll=%.3f pitch=%.3f yaw=%.3f",
+		// 			(double)rpy2(0),
+		// 			(double)rpy2(1),
+		// 			(double)rpy2(2));
+	}
 
 	// Manual control input
 	if (_manual_control_sub.updated()) {
 		_manual_control_sub.copy(&_manual_control);
 		updateYawRateSp();
-		updateAttitudeWithYaw(dt);
+		integrateYawSp(dt);
 	}
 
     calcRollTorque();
@@ -227,19 +278,8 @@ void CdusBacksteppingAttitude::updateYawRateSp() {
 	_yaw_rate_sp = _yaw_rate_scale * _manual_control.yaw;
 }
 
-void CdusBacksteppingAttitude::updateAttitudeWithYaw(float& dt) {
-	// 1) integrate
-	float dpsi = _yaw_rate_sp * dt;
-
-	// 2) delta yaw quaternion about NED Down axis
-	matrix::Quatf q_dyaw;
-	q_dyaw(0) = cosf(0.5f * dpsi);
-	q_dyaw(1) = 0.f;
-	q_dyaw(2) = 0.f;
-	q_dyaw(3) = sinf(0.5f * dpsi);
-
-	_q_att_sp = q_dyaw * _q_att_sp;
-	_q_att_sp.normalize();
+void CdusBacksteppingAttitude::integrateYawSp(float& dt) {
+    _yaw_sp += _yaw_rate_sp * dt;
 }
 
 /** ModuleBase interface **/

@@ -12,6 +12,7 @@
 #include <uORB/topics/manual_control_setpoint.h>
 #include <uORB/topics/vehicle_local_position.h>
 #include <uORB/topics/vehicle_attitude.h>
+#include <uORB/topics/vehicle_status.h>
 #include <uORB/topics/vehicle_attitude_setpoint.h>
 #include <uORB/topics/vehicle_angular_velocity.h>
 #include <uORB/topics/vehicle_torque_setpoint.h>
@@ -58,6 +59,8 @@ private:
 	uORB::Subscription _local_position_sub{ORB_ID(vehicle_local_position)};
 	uORB::Subscription _attitude_sub{ORB_ID(vehicle_attitude)};
     uORB::Subscription _attitude_setpoint_sub{ORB_ID(vehicle_attitude_setpoint)};
+	uORB::Subscription _vehicle_status_sub{ORB_ID(vehicle_status)};
+
 	uORB::SubscriptionCallbackWorkItem _angular_velocity_sub{this, ORB_ID(vehicle_angular_velocity)};
 
 	uORB::SubscriptionInterval _parameter_update_sub{ORB_ID(parameter_update), 1_s};
@@ -72,7 +75,8 @@ private:
     void calcYawTorque();
 	void parameters_updated();
 	void updateYawRateSp();
-	void updateAttitudeWithYaw(float& dt);
+	void integrateYawSp(float& dt);
+	void resetYawInit(uint64_t now);
 
 	// latest control mode
 	vehicle_control_mode_s _control_mode{};
@@ -83,6 +87,7 @@ private:
 	vehicle_attitude_s          _attitude{};
     vehicle_attitude_setpoint_s _attitude_sp{};
 	vehicle_angular_velocity_s  _angular_velocity{};
+	vehicle_status_s 			_vehicle_status{};
 
 	// Controller I/O 
 	matrix::Vector3f _vel_est_ned{0.f, 0.f, 0.f};
@@ -95,10 +100,16 @@ private:
 	matrix::Vector3f _thrust_sp{0.f, 0.f, 0.f};  // typically thrust in N or normalized
 
 	uint64_t _last_run{0};                  // last timestamp_sample [µs]
+	uint64_t _first_run{0};
 
 	// Yaw adjustment params
+	bool _constrain_yaw{true};
+	bool _yaw_initialized{false};
+	bool _armed_prev{false};   // last seen arming state
+	float _yaw_sp{0.f};
 	float _yaw_rate_sp{0.f};
-	float _yaw_rate_scale{1000.f};
+	float _yaw_rate_scale{10.f};
+	int iter{0};
 
     // Physical parameters
 	float _mass{0.07f};

@@ -13,7 +13,7 @@ control_allocator start
 #
 # Start Multicopter Rate Controller.
 #
-mc_rate_control start
+cdus_backstepping_attitude start
 
 #
 # Start Multicopter Attitude Controller.
