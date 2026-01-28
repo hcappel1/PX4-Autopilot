@@ -147,7 +147,8 @@ void CdusBacksteppingAttitude::Run()
 
 		if(!_yaw_initialized) {
 			float t_from_start = (now - _first_run)*1e-6;
-			if(fabs(rpy(2)) > 0.f && t_from_start > 3.f) {
+			float yaw_abs = fabs(rpy(2));
+			if(yaw_abs > 0.f && t_from_start > 3.f) {
 				_yaw_initialized = true;
 			}
 
