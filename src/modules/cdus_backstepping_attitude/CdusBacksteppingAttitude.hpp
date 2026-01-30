@@ -103,7 +103,7 @@ private:
 	uint64_t _first_run{0};
 
 	// Yaw adjustment params
-	bool _constrain_yaw{true};
+	bool _constrain_yaw{false};
 	bool _yaw_initialized{false};
 	bool _armed_prev{false};   // last seen arming state
 	float _yaw_sp{0.f};
