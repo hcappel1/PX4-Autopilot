@@ -123,16 +123,21 @@ void CdusBacksteppingAttitude::Run()
 		_vel_est_ned(0) = _local_position.vx; // [m/s] North
 		_vel_est_ned(1) = _local_position.vy; // [m/s] East
 		_vel_est_ned(2) = _local_position.vz; // [m/s] Down
+
+		_vel_est_body = _R_att.transpose() * _vel_est_ned; // rotate NED velocity to body frame
 	}
 
 	// Attitude (quaternion)
 	if (_attitude_sub.updated()) {
 		_attitude_sub.copy(&_attitude);
 
+		// Get the Quaternion from the attitude message
 		_q_att = matrix::Quatf(_attitude.q[0],
 			       _attitude.q[1],
 			       _attitude.q[2],
 			       _attitude.q[3]);
+		// Get the DCM from the Quaternion
+		_R_att = matrix::Dcmf(_q_att);
 	}
 
 	if (_attitude_setpoint_sub.updated()) {
@@ -212,67 +217,167 @@ void CdusBacksteppingAttitude::Run()
 	_thrust_sp_pub.publish(thrust_msg);
 }
 
+// void CdusBacksteppingAttitude::calcRollTorque() {
+//     const float Ix = _Ixx;
+//     const float Iy = _Iyy;
+//     const float Iz = _Izz;
+//     const float k1 = _Kv_r;
+//     const float k2 = _Ka_r;
+//     const float q0 = _q_att(0);
+//     const float qv1 = _q_att(1);
+//     const float qv2 = _q_att(2);
+//     const float qv3 = _q_att(3);
+//     const float qc1 = _q_att_sp(0);
+//     const float qc2 = _q_att_sp(1);
+//     const float qc3 = _q_att_sp(2);
+//     const float qc4 = _q_att_sp(3);
+//     const float omega1 = _rates_body(0);
+//     const float omega2 = _rates_body(1);
+//     const float omega3 = _rates_body(2);
+
+//     _torque_sp(0) = -Ix*(k1*omega1 + k2*omega1 - q0*qc2 + qc1*qv1 - qc3*qv3 + qc4*qv2 - k1*k2*q0*qc2 + k1*k2*qc1*qv1 - k1*k2*qc3*qv3 + k1*k2*qc4*qv2 + Iy*omega2*omega3/Ix - Iz*omega2*omega3/Ix);
+// }
+
 void CdusBacksteppingAttitude::calcRollTorque() {
     const float Ix = _Ixx;
     const float Iy = _Iyy;
     const float Iz = _Izz;
+
     const float k1 = _Kv_r;
     const float k2 = _Ka_r;
-    const float q0 = _q_att(0);
+
+    const float alpha_d = 0.f;   
+    const float V_b2    = _vel_est_body(1);    // body-velocity y component (V_b2)
+
+    // Current attitude quaternion q = [q0, qv1, qv2, qv3]
+    const float q0  = _q_att(0);
     const float qv1 = _q_att(1);
     const float qv2 = _q_att(2);
     const float qv3 = _q_att(3);
-    const float qc1 = _q_att_sp(0);
-    const float qc2 = _q_att_sp(1);
-    const float qc3 = _q_att_sp(2);
-    const float qc4 = _q_att_sp(3);
+
+    // Commanded quaternion q_c = [q_c0, q_cv1, q_cv2, q_cv3]
+    const float qc0  = _q_att_sp(0);
+    const float qcv1 = _q_att_sp(1);
+    const float qcv2 = _q_att_sp(2);
+    const float qcv3 = _q_att_sp(3);
+
+    // Body rates omega = [omega1, omega2, omega3]
     const float omega1 = _rates_body(0);
     const float omega2 = _rates_body(1);
     const float omega3 = _rates_body(2);
 
-    _torque_sp(0) = -Ix*(k1*omega1 + k2*omega1 - q0*qc2 + qc1*qv1 - qc3*qv3 + qc4*qv2 - k1*k2*q0*qc2 + k1*k2*qc1*qv1 - k1*k2*qc3*qv3 + k1*k2*qc4*qv2 + Iy*omega2*omega3/Ix - Iz*omega2*omega3/Ix);
+    // t2+t4+t6+t7 (without Ix factor)
+    const float S = (q0 * qcv1) + (qcv2 * qv3) - (qc0 * qv1) - (qcv3 * qv2);
+
+    _torque_sp(0) = Ix * S * (1.0f + k1 * k2) - V_b2 * alpha_d - Ix * (k1 + k2) * omega1 + (Iz - Iy) * omega2 * omega3;
 }
+
+
+// void CdusBacksteppingAttitude::calcPitchTorque() {
+//     const float Ix = _Ixx;
+//     const float Iy = _Iyy;
+//     const float Iz = _Izz;
+//     const float k1 = _Kv_p;
+//     const float k2 = _Ka_p;
+//     const float q0 = _q_att(0);
+//     const float qv1 = _q_att(1);
+//     const float qv2 = _q_att(2);
+//     const float qv3 = _q_att(3);
+//     const float qc1 = _q_att_sp(0);
+//     const float qc2 = _q_att_sp(1);
+//     const float qc3 = _q_att_sp(2);
+//     const float qc4 = _q_att_sp(3);
+//     const float omega1 = _rates_body(0);
+//     const float omega2 = _rates_body(1);
+//     const float omega3 = _rates_body(2);
+
+//     _torque_sp(1) = -Iy*(k1*omega2 + k2*omega2 - q0*qc3 + qc1*qv2 + qc2*qv3 - qc4*qv1 - k1*k2*q0*qc3 + k1*k2*qc1*qv2 + k1*k2*qc2*qv3 - k1*k2*qc4*qv1 - Ix*omega1*omega3/Iy + Iz*omega1*omega3/Iy);
+// }
 
 void CdusBacksteppingAttitude::calcPitchTorque() {
     const float Ix = _Ixx;
     const float Iy = _Iyy;
     const float Iz = _Izz;
+
     const float k1 = _Kv_p;
     const float k2 = _Ka_p;
-    const float q0 = _q_att(0);
+
+    const float alpha_d = 0.f; 
+    const float V_b1    = _vel_est_body(0);   // body-velocity x component (V_b1)
+
+    // Current attitude quaternion q = [q0, qv1, qv2, qv3]
+    const float q0  = _q_att(0);
     const float qv1 = _q_att(1);
     const float qv2 = _q_att(2);
     const float qv3 = _q_att(3);
-    const float qc1 = _q_att_sp(0);
-    const float qc2 = _q_att_sp(1);
-    const float qc3 = _q_att_sp(2);
-    const float qc4 = _q_att_sp(3);
+
+    // Commanded quaternion q_c = [q_c0, q_cv1, q_cv2, q_cv3]
+    const float qc0  = _q_att_sp(0);
+    const float qcv1 = _q_att_sp(1);
+    const float qcv2 = _q_att_sp(2);
+    const float qcv3 = _q_att_sp(3);
+
+    // Body rates omega = [omega1, omega2, omega3]
     const float omega1 = _rates_body(0);
     const float omega2 = _rates_body(1);
     const float omega3 = _rates_body(2);
 
-    _torque_sp(1) = -Iy*(k1*omega2 + k2*omega2 - q0*qc3 + qc1*qv2 + qc2*qv3 - qc4*qv1 - k1*k2*q0*qc3 + k1*k2*qc1*qv2 + k1*k2*qc2*qv3 - k1*k2*qc4*qv1 - Ix*omega1*omega3/Iy + Iz*omega1*omega3/Iy);
+    // t2+t5+t6+t7 (without Iy factor)
+    const float S = (q0 * qcv2) + (qcv3 * qv1) - (qc0 * qv2) - (qcv1 * qv3);
+
+    _torque_sp(1) = Iy * S * (1.0f + k1 * k2) + V_b1 * alpha_d - Iy * (k1 + k2) * omega2 + (Ix - Iz) * omega1 * omega3;
 }
+
+// void CdusBacksteppingAttitude::calcYawTorque() {
+//     const float Ix = _Ixx;
+//     const float Iy = _Iyy;
+//     const float Iz = _Izz;
+//     const float k1 = _Kv_y;
+//     const float k2 = _Ka_y;
+//     const float q0 = _q_att(0);
+//     const float qv1 = _q_att(1);
+//     const float qv2 = _q_att(2);
+//     const float qv3 = _q_att(3);
+//     const float qc1 = _q_att_sp(0);
+//     const float qc2 = _q_att_sp(1);
+//     const float qc3 = _q_att_sp(2);
+//     const float qc4 = _q_att_sp(3);
+//     const float omega1 = _rates_body(0);
+//     const float omega2 = _rates_body(1);
+//     const float omega3 = _rates_body(2);
+
+//     _torque_sp(2) = -Iz*(k1*omega3 + k2*omega3 - q0*qc4 + qc1*qv3 - qc2*qv2 + qc3*qv1 - k1*k2*q0*qc4 + k1*k2*qc1*qv3 - k1*k2*qc2*qv2 + k1*k2*qc3*qv1 + Ix*omega1*omega2/Iz - Iy*omega1*omega2/Iz);
+// }
 
 void CdusBacksteppingAttitude::calcYawTorque() {
     const float Ix = _Ixx;
     const float Iy = _Iyy;
     const float Iz = _Izz;
+
     const float k1 = _Kv_y;
     const float k2 = _Ka_y;
-    const float q0 = _q_att(0);
+
+    // Current attitude quaternion q = [q0, qv1, qv2, qv3]
+    const float q0  = _q_att(0);
     const float qv1 = _q_att(1);
     const float qv2 = _q_att(2);
     const float qv3 = _q_att(3);
-    const float qc1 = _q_att_sp(0);
-    const float qc2 = _q_att_sp(1);
-    const float qc3 = _q_att_sp(2);
-    const float qc4 = _q_att_sp(3);
+
+    // Commanded quaternion q_c = [q_c0, q_cv1, q_cv2, q_cv3]
+    const float qc0  = _q_att_sp(0);
+    const float qcv1 = _q_att_sp(1);
+    const float qcv2 = _q_att_sp(2);
+    const float qcv3 = _q_att_sp(3);
+
+    // Body rates omega = [omega1, omega2, omega3]
     const float omega1 = _rates_body(0);
     const float omega2 = _rates_body(1);
     const float omega3 = _rates_body(2);
 
-    _torque_sp(2) = -Iz*(k1*omega3 + k2*omega3 - q0*qc4 + qc1*qv3 - qc2*qv2 + qc3*qv1 - k1*k2*q0*qc4 + k1*k2*qc1*qv3 - k1*k2*qc2*qv2 + k1*k2*qc3*qv1 + Ix*omega1*omega2/Iz - Iy*omega1*omega2/Iz);
+    // t2+t4+t6+t7 (without Iz factor)
+    const float S = (q0 * qcv3) + (qcv1 * qv2) - (qc0 * qv3) - (qcv2 * qv1);
+
+    _torque_sp(2) = Iz * S * (1.0f + k1 * k2) - Iz * (k1 + k2) * omega3 + (Iy - Ix) * omega1 * omega2;
 }
 
 void CdusBacksteppingAttitude::updateYawRateSp() {
