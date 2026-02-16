@@ -91,9 +91,11 @@ private:
 
 	// Controller I/O 
 	matrix::Vector3f _vel_est_ned{0.f, 0.f, 0.f};
+	matrix::Vector3f _vel_est_body{0.f, 0.f, 0.f};
 	matrix::Quatf    _q_att{1.f, 0.f, 0.f, 0.f};
     matrix::Quatf    _q_att_sp{1.f, 0.f, 0.f, 0.f};
 	matrix::Vector3f _rates_body{0.f, 0.f, 0.f};
+	matrix::Dcmf     _R_att{matrix::eye<float, 3>()};
 
 	// Outputs
 	matrix::Vector3f _torque_sp{0.f, 0.f, 0.f};  // [L, M, N] (N*m)
@@ -118,13 +120,13 @@ private:
 	float _Izz{0.02f};
 
 	// Backstepping gains (same names as in your ROS code)
-	float _Cd{0.25f};
-	float _Kv_r{10.0f};
-	float _Kv_p{10.0f};
-	float _Kv_y{10.0f};
-	float _Ka_r{10.0f};
-	float _Ka_p{10.0f};
-	float _Ka_y{10.0f};
+	float _Cd{0.0f};
+	float _Kv_r{8.0f};
+	float _Kv_p{8.0f};
+	float _Kv_y{8.0f};
+	float _Ka_r{8.0f};
+	float _Ka_p{8.0f};
+	float _Ka_y{8.0f};
 	float _torque_scale{1.0};
 
 	DEFINE_PARAMETERS(
