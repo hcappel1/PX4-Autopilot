@@ -202,7 +202,7 @@ void CdusAllocatorDuct::Run()
 	}
 
 	// Vector4f actuator_trim(1570.f, 1570.f, 1450.f, 1450.f);
-	Vector4f actuator_trim(m_trim, m_trim, 1410.f, 1440.f);
+	Vector4f actuator_trim(m_trim, m_trim, 1450.f, 1450.f);
 
 	// Solve using pseudo-inverse
 	Vector<float, NUM_MOTORS> u = actuator_trim + d_PWM;
