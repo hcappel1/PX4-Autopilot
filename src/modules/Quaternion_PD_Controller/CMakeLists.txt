@@ -1,11 +1,11 @@
 px4_add_module(
-	MODULE modules__cdus_backstepping_attitude
-	MAIN cdus_backstepping_attitude
+	MODULE modules__quaternion_pd_controller
+	MAIN quaternion_PD_Controller
 	COMPILE_FLAGS
 		${MAX_CUSTOM_OPT_LEVEL}
 	SRCS
-		CdusBacksteppingAttitude.cpp
-		CdusBacksteppingAttitude.hpp
+		quaternion_PD_Controller.cpp
+		quaternion_PD_Controller.hpp
 	DEPENDS
 		circuit_breaker
 		mathlib

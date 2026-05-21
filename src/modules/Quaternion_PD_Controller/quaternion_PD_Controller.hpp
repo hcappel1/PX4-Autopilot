@@ -32,14 +32,14 @@ using namespace time_literals;
  * - Takes rate + body thrust setpoints via vehicle_rates_setpoint
  * - Outputs vehicle_torque_setpoint + vehicle_thrust_setpoint
  */
-class CdusBacksteppingAttitude final :
-	public ModuleBase<CdusBacksteppingAttitude>,
+class quaternion_PD_Controller final :
+	public ModuleBase<quaternion_PD_Controller>,
 	public ModuleParams,
 	public px4::WorkItem
 {
 public:
-	CdusBacksteppingAttitude();
-	~CdusBacksteppingAttitude() override;
+	quaternion_PD_Controller();
+	~quaternion_PD_Controller() override;
 
 	/** Initialize subscriptions and schedule */
 	bool init();
@@ -119,7 +119,7 @@ private:
 	float _Iyy{0.02f};
 	float _Izz{0.02f};
 
-	// Backstepping gains (same names as in your ROS code)
+	// Quaternion PD gains 
 	float _Cd{0.0f};
 	float _Kv_r{8.0f};
 	float _Kv_p{8.0f};

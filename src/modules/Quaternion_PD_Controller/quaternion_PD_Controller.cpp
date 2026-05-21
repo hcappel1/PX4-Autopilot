@@ -1,10 +1,10 @@
 /****************************************************************************
  *
- *   Backstepping control module (CdusBackstepping)
+ *   Quaternion PD controller module (quaternion_PD_Controller)
  *
  ****************************************************************************/
 
-#include "CdusBacksteppingAttitude.hpp"
+#include "quaternion_PD_Controller.hpp"
 
 #include <drivers/drv_hrt.h>
 #include <mathlib/math/Limits.hpp>
@@ -12,17 +12,17 @@
 using math::constrain;
 using namespace time_literals;
 
-CdusBacksteppingAttitude::CdusBacksteppingAttitude() :
+quaternion_PD_Controller::quaternion_PD_Controller() :
 	ModuleParams(nullptr),
 	WorkItem(MODULE_NAME, px4::wq_configurations::rate_ctrl)
 {
 }
 
-CdusBacksteppingAttitude::~CdusBacksteppingAttitude()
+quaternion_PD_Controller::~quaternion_PD_Controller()
 {
 }
 
-bool CdusBacksteppingAttitude::init()
+bool quaternion_PD_Controller::init()
 {
 	// Run whenever vehicle_angular_velocity updates
 	if (!_angular_velocity_sub.registerCallback()) {
@@ -33,7 +33,7 @@ bool CdusBacksteppingAttitude::init()
 	return true;
 }
 
-void CdusBacksteppingAttitude::parameters_updated() {
+void quaternion_PD_Controller::parameters_updated() {
 
 	_Kv_r = _param_bsa_roll_kv.get();
 	_Kv_p = _param_bsa_pitch_kv.get();
@@ -48,7 +48,7 @@ void CdusBacksteppingAttitude::parameters_updated() {
 	_Izz = _param_bsa_izz.get();
 }
 
-void CdusBacksteppingAttitude::resetYawInit(uint64_t now)
+void quaternion_PD_Controller::resetYawInit(uint64_t now)
 {
     _yaw_initialized = false;
     _yaw_sp = 0.f;
@@ -62,7 +62,7 @@ void CdusBacksteppingAttitude::resetYawInit(uint64_t now)
     // any other per-arm/disarm init you need
 }
 
-void CdusBacksteppingAttitude::Run()
+void quaternion_PD_Controller::Run()
 {
     if (should_exit()) {
 		_angular_velocity_sub.unregisterCallback();
@@ -217,7 +217,7 @@ void CdusBacksteppingAttitude::Run()
 	_thrust_sp_pub.publish(thrust_msg);
 }
 
-void CdusBacksteppingAttitude::calcRollTorque() {
+void quaternion_PD_Controller::calcRollTorque() {
 	// Roll channel P and D gains (k1, k2)
 	const float k1 = _Kv_r;
 	const float k2 = _Ka_r;
@@ -252,7 +252,7 @@ void CdusBacksteppingAttitude::calcRollTorque() {
 	_torque_sp(0) = k1.*(q0*qcv1*t7-qc0*qv1*t7-qcv2*qv3*t7+qcv3*qv2*t7)-k2*omega1;
 }
 
-void CdusBacksteppingAttitude::calcPitchTorque() {
+void quaternion_PD_Controller::calcPitchTorque() {
 	// Pitch channel P and D gains (k1, k2)
 	const float k1 = _Kv_p;
 	const float k2 = _Ka_p;
@@ -288,7 +288,7 @@ void CdusBacksteppingAttitude::calcPitchTorque() {
 	_torque_sp(0) = k1.*(q0*qcv2*t7-qc0*qv2*t7+qcv1*qv3*t7-qcv3*qv1*t7)-k2*omega2;
 }
 
-void CdusBacksteppingAttitude::calcYawTorque() {
+void quaternion_PD_Controller::calcYawTorque() {
 	// Yaw channel P and D gains (k1, k2)
 	const float k1 = _Kv_y;
 	const float k2 = _Ka_y;
@@ -320,19 +320,19 @@ void CdusBacksteppingAttitude::calcYawTorque() {
 	_torque_sp(2) = k1.*(q_0*q_cv3*t7-q_c0*q_v3*t7-q_cv1*q_v2*t7+q_cv2*q_v1*t7)-k2*omega3;
 }
 
-void CdusBacksteppingAttitude::updateYawRateSp() {
+void quaternion_PD_Controller::updateYawRateSp() {
 	_yaw_rate_sp = _yaw_rate_scale * _manual_control.yaw;
 }
 
-void CdusBacksteppingAttitude::integrateYawSp(float& dt) {
+void quaternion_PD_Controller::integrateYawSp(float& dt) {
     _yaw_sp += _yaw_rate_sp * dt;
 }
 
 /** ModuleBase interface **/
 
-int CdusBacksteppingAttitude::task_spawn(int argc, char *argv[])
+int quaternion_PD_Controller::task_spawn(int argc, char *argv[])
 {
-	CdusBacksteppingAttitude *instance = new CdusBacksteppingAttitude();
+	quaternion_PD_Controller *instance = new quaternion_PD_Controller();
 
 	if (!instance) {
 		PX4_ERR("backstepping attitude failed");
@@ -352,13 +352,13 @@ int CdusBacksteppingAttitude::task_spawn(int argc, char *argv[])
 	return PX4_ERROR;
 }
 
-int CdusBacksteppingAttitude::custom_command(int argc, char *argv[])
+int quaternion_PD_Controller::custom_command(int argc, char *argv[])
 {
 	// No custom commands yet
 	return print_usage("unknown command");
 }
 
-int CdusBacksteppingAttitude::print_usage(const char *reason)
+int quaternion_PD_Controller::print_usage(const char *reason)
 {
 	if (reason) {
 		PX4_WARN("%s\n", reason);
@@ -366,21 +366,21 @@ int CdusBacksteppingAttitude::print_usage(const char *reason)
 
 	PRINT_MODULE_DESCRIPTION(
 		R"DESCR_STR(
-Vertical vehicle backstepping controller.
+Vertical vehicle quaternion PD controller.
 
 - Subscribes: manual_control_input, vehicle local position, vehicle_attitude, vehicle_angular_velocity, vehicle_control_mode
 - Publishes: vehicle_torque_setpoint, vehicle_thrust_setpoint
 - Uses fixed gains for controller.
 )DESCR_STR");
 
-	PRINT_MODULE_USAGE_NAME("cdus_backstepping_attitude", "controller");
+	PRINT_MODULE_USAGE_NAME("quaternion_PD_Controller", "controller");
 	PRINT_MODULE_USAGE_COMMAND("start");
 	PRINT_MODULE_USAGE_DEFAULT_COMMANDS();
 
 	return 0;
 }
 
-extern "C" __EXPORT int cdus_backstepping_attitude_main(int argc, char *argv[])
+extern "C" __EXPORT int quaternion_PD_Controller_main(int argc, char *argv[])
 {
-	return CdusBacksteppingAttitude::main(argc, argv);
+	return quaternion_PD_Controller::main(argc, argv);
 }
