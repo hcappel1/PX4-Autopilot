@@ -1,0 +1,10 @@
+menuconfig MODULES_QUATERNION_PD_CONTROLLER
+    bool "quaternion_pd_controller"
+    default n
+    ---help---
+        Enable quaternion_pd_controller
+
+menuconfig USER_QUATERNION_PD_CONTROLLER
+    bool "quaternion_pd_controller running as userspace module"
+    default n
+    depends on BOARD_PROTECTED && MODULES_QUATERNION_PD_CONTROLLER

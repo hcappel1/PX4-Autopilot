@@ -32,14 +32,14 @@ using namespace time_literals;
  * - Takes rate + body thrust setpoints via vehicle_rates_setpoint
  * - Outputs vehicle_torque_setpoint + vehicle_thrust_setpoint
  */
-class quaternion_PD_Controller final :
-	public ModuleBase<quaternion_PD_Controller>,
+class quaternion_pd_controller final :
+	public ModuleBase<quaternion_pd_controller>,
 	public ModuleParams,
 	public px4::WorkItem
 {
 public:
-	quaternion_PD_Controller();
-	~quaternion_PD_Controller() override;
+	quaternion_pd_controller();
+	~quaternion_pd_controller() override;
 
 	/** Initialize subscriptions and schedule */
 	bool init();
@@ -121,13 +121,24 @@ private:
 
 	// Quaternion PD gains 
 	float _Cd{0.0f};
-	float _Kv_r{8.0f};
-	float _Kv_p{8.0f};
-	float _Kv_y{8.0f};
-	float _Ka_r{8.0f};
-	float _Ka_p{8.0f};
-	float _Ka_y{8.0f};
+	float _Kv_r{1.0f};
+	float _Kv_p{1.0f};
+	float _Kv_y{1.0f};
+	float _Ka_r{0.2f};
+	float _Ka_p{0.2f};
+	float _Ka_y{0.2f};
 	float _torque_scale{1.0};
+
+
+	// Temporary fix, define params for the quaternion PD controller. These should be tuned for the specific vehicle and ideally exposed as parameters.
+	// Quaternion PD gains 
+	float qpd_Roll_kP{1.0f};
+	float qpd_Pitch_kP{1.0f};
+	float qpd_Yaw_kP{1.0f};
+	float qpd_Roll_kD{0.2f};
+	float qpd_Pitch_kD{0.2f};
+	float qpd_Yaw_kD{0.2f};
+
 
 	DEFINE_PARAMETERS(
 		(ParamFloat<px4::params::BSA_ROLL_KV>) _param_bsa_roll_kv,

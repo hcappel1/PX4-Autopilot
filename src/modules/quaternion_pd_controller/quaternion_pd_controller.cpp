@@ -1,10 +1,10 @@
 /****************************************************************************
  *
- *   Quaternion PD controller module (quaternion_PD_Controller)
+ *   Quaternion PD controller module (quaternion_pd_controller)
  *
  ****************************************************************************/
 
-#include "quaternion_PD_Controller.hpp"
+#include "quaternion_pd_controller.hpp"
 
 #include <drivers/drv_hrt.h>
 #include <mathlib/math/Limits.hpp>
@@ -12,17 +12,17 @@
 using math::constrain;
 using namespace time_literals;
 
-quaternion_PD_Controller::quaternion_PD_Controller() :
+quaternion_pd_controller::quaternion_pd_controller() :
 	ModuleParams(nullptr),
 	WorkItem(MODULE_NAME, px4::wq_configurations::rate_ctrl)
 {
 }
 
-quaternion_PD_Controller::~quaternion_PD_Controller()
+quaternion_pd_controller::~quaternion_pd_controller()
 {
 }
 
-bool quaternion_PD_Controller::init()
+bool quaternion_pd_controller::init()
 {
 	// Run whenever vehicle_angular_velocity updates
 	if (!_angular_velocity_sub.registerCallback()) {
@@ -33,7 +33,7 @@ bool quaternion_PD_Controller::init()
 	return true;
 }
 
-void quaternion_PD_Controller::parameters_updated() {
+void quaternion_pd_controller::parameters_updated() {
 
 	_Kv_r = _param_bsa_roll_kv.get();
 	_Kv_p = _param_bsa_pitch_kv.get();
@@ -48,7 +48,7 @@ void quaternion_PD_Controller::parameters_updated() {
 	_Izz = _param_bsa_izz.get();
 }
 
-void quaternion_PD_Controller::resetYawInit(uint64_t now)
+void quaternion_pd_controller::resetYawInit(uint64_t now)
 {
     _yaw_initialized = false;
     _yaw_sp = 0.f;
@@ -62,7 +62,7 @@ void quaternion_PD_Controller::resetYawInit(uint64_t now)
     // any other per-arm/disarm init you need
 }
 
-void quaternion_PD_Controller::Run()
+void quaternion_pd_controller::Run()
 {
     if (should_exit()) {
 		_angular_velocity_sub.unregisterCallback();
@@ -217,13 +217,13 @@ void quaternion_PD_Controller::Run()
 	_thrust_sp_pub.publish(thrust_msg);
 }
 
-void quaternion_PD_Controller::calcRollTorque() {
+void quaternion_pd_controller::calcRollTorque() {
 	// Roll channel P and D gains (k1, k2)
-	const float k1 = _Kv_r;
-	const float k2 = _Ka_r;
+	const float k1 = qpd_Roll_kP;
+	const float k2 = qpd_Roll_kD;
 
-	const float alpha_d = 0.f;   
-	const float V_b2    = _vel_est_body(1);    // body-velocity y component (V_b2)
+	// const float alpha_d = 0.f;   
+	// const float V_b2    = _vel_est_body(1);    // body-velocity y component (V_b2)
 
 	// Current attitude quaternion q = [q0, qv1, qv2, qv3]
 	const float q0  = _q_att(0);
@@ -239,26 +239,26 @@ void quaternion_PD_Controller::calcRollTorque() {
 
 	// Body rates omega = [omega1, omega2, omega3]
 	const float omega1 = _rates_body(0);
-	const float omega2 = _rates_body(1);
-	const float omega3 = _rates_body(2);
+	//const float omega2 = _rates_body(1);
+	//const float omega3 = _rates_body(2);
 
 	// Calculate intermediate values
-	t2 = qc0*qc0;
-	t3 = qcv1*qcv1;
-	t4 = qcv2*qcv2;
-	t5 = qcv3*qcv3;
-	t6 = t2+t3+t4+t5;
-	t7 = 1.0/t6;
-	_torque_sp(0) = k1.*(q0*qcv1*t7-qc0*qv1*t7-qcv2*qv3*t7+qcv3*qv2*t7)-k2*omega1;
+	const float t2 = qc0*qc0;
+	const float t3 = qcv1*qcv1;
+	const float t4 = qcv2*qcv2;
+	const float t5 = qcv3*qcv3;
+	const float t6 = t2+t3+t4+t5;
+	const float t7 = 1.f/t6;
+	_torque_sp(0) = k1*(q0*qcv1*t7-qc0*qv1*t7-qcv2*qv3*t7+qcv3*qv2*t7)-k2*omega1;
 }
 
-void quaternion_PD_Controller::calcPitchTorque() {
+void quaternion_pd_controller::calcPitchTorque() {
 	// Pitch channel P and D gains (k1, k2)
-	const float k1 = _Kv_p;
-	const float k2 = _Ka_p;
+	const float k1 = qpd_Pitch_kP;
+	const float k2 = qpd_Pitch_kD;
 
-	const float alpha_d = 0.f; 
-	const float V_b1    = _vel_est_body(0);   // body-velocity x component (V_b1)
+	// const float alpha_d = 0.f; 
+	// const float V_b1    = _vel_est_body(0);   // body-velocity x component (V_b1)
 
 	// Current attitude quaternion q = [q0, qv1, qv2, qv3]
 	const float q0  = _q_att(0);
@@ -273,9 +273,9 @@ void quaternion_PD_Controller::calcPitchTorque() {
 	const float qcv3 = _q_att_sp(3);
 
 	// Body rates omega = [omega1, omega2, omega3]
-	const float omega1 = _rates_body(0);
+	//const float omega1 = _rates_body(0);
 	const float omega2 = _rates_body(1);
-	const float omega3 = _rates_body(2);
+	// float omega3 = _rates_body(2);
 
 	const float t2 = qc0*qc0;
 	const float t3 = qcv1*qcv1;
@@ -283,15 +283,15 @@ void quaternion_PD_Controller::calcPitchTorque() {
 	const float t5 = qcv3*qcv3;
 
 	const float t6 = t2+t3+t4+t5;
-	const float t7 = 1.0/t6;
+	const float t7 = 1.f/t6;
 
-	_torque_sp(0) = k1.*(q0*qcv2*t7-qc0*qv2*t7+qcv1*qv3*t7-qcv3*qv1*t7)-k2*omega2;
+	_torque_sp(1) = k1*(q0*qcv2*t7-qc0*qv2*t7+qcv1*qv3*t7-qcv3*qv1*t7)-k2*omega2;
 }
 
-void quaternion_PD_Controller::calcYawTorque() {
+void quaternion_pd_controller::calcYawTorque() {
 	// Yaw channel P and D gains (k1, k2)
-	const float k1 = _Kv_y;
-	const float k2 = _Ka_y;
+	const float k1 = qpd_Yaw_kP;
+	const float k2 = qpd_Yaw_kD;
 
 	// Current attitude quaternion q = [q0, qv1, qv2, qv3]
 	const float q0  = _q_att(0);
@@ -306,33 +306,33 @@ void quaternion_PD_Controller::calcYawTorque() {
 	const float qcv3 = _q_att_sp(3);
 
 	// Body rates omega = [omega1, omega2, omega3]
-	const float omega1 = _rates_body(0);
-	const float omega2 = _rates_body(1);
+	//const float omega1 = _rates_body(0);
+	// float omega2 = _rates_body(1);
 	const float omega3 = _rates_body(2);
 
 	// Calculate intermediate values
-	t2 = q_c0*q_c0;
-	t3 = q_cv1*q_cv1;
-	t4 = q_cv2*q_cv2;
-	t5 = q_cv3*q_cv3;
-	t6 = t2+t3+t4+t5;
-	t7 = 1.0/t6;
-	_torque_sp(2) = k1.*(q_0*q_cv3*t7-q_c0*q_v3*t7-q_cv1*q_v2*t7+q_cv2*q_v1*t7)-k2*omega3;
+	const float t2 = qc0*qc0;
+	const float t3 = qcv1*qcv1;
+	const float t4 = qcv2*qcv2;
+	const float t5 = qcv3*qcv3;
+	const float t6 = t2+t3+t4+t5;
+	const float t7 = 1.f/t6;
+	_torque_sp(2) = k1*(q0*qcv3*t7-qc0*qv3*t7-qcv1*qv2*t7+qcv2*qv1*t7)-k2*omega3;
 }
 
-void quaternion_PD_Controller::updateYawRateSp() {
+void quaternion_pd_controller::updateYawRateSp() {
 	_yaw_rate_sp = _yaw_rate_scale * _manual_control.yaw;
 }
 
-void quaternion_PD_Controller::integrateYawSp(float& dt) {
+void quaternion_pd_controller::integrateYawSp(float& dt) {
     _yaw_sp += _yaw_rate_sp * dt;
 }
 
 /** ModuleBase interface **/
 
-int quaternion_PD_Controller::task_spawn(int argc, char *argv[])
+int quaternion_pd_controller::task_spawn(int argc, char *argv[])
 {
-	quaternion_PD_Controller *instance = new quaternion_PD_Controller();
+	quaternion_pd_controller *instance = new quaternion_pd_controller();
 
 	if (!instance) {
 		PX4_ERR("backstepping attitude failed");
@@ -352,13 +352,13 @@ int quaternion_PD_Controller::task_spawn(int argc, char *argv[])
 	return PX4_ERROR;
 }
 
-int quaternion_PD_Controller::custom_command(int argc, char *argv[])
+int quaternion_pd_controller::custom_command(int argc, char *argv[])
 {
 	// No custom commands yet
 	return print_usage("unknown command");
 }
 
-int quaternion_PD_Controller::print_usage(const char *reason)
+int quaternion_pd_controller::print_usage(const char *reason)
 {
 	if (reason) {
 		PX4_WARN("%s\n", reason);
@@ -373,14 +373,14 @@ Vertical vehicle quaternion PD controller.
 - Uses fixed gains for controller.
 )DESCR_STR");
 
-	PRINT_MODULE_USAGE_NAME("quaternion_PD_Controller", "controller");
+	PRINT_MODULE_USAGE_NAME("quaternion_pd_controller", "controller");
 	PRINT_MODULE_USAGE_COMMAND("start");
 	PRINT_MODULE_USAGE_DEFAULT_COMMANDS();
 
 	return 0;
 }
 
-extern "C" __EXPORT int quaternion_PD_Controller_main(int argc, char *argv[])
+extern "C" __EXPORT int quaternion_pd_controller_main(int argc, char *argv[])
 {
-	return quaternion_PD_Controller::main(argc, argv);
+	return quaternion_pd_controller::main(argc, argv);
 }

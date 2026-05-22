@@ -1,11 +1,11 @@
 px4_add_module(
 	MODULE modules__quaternion_pd_controller
-	MAIN quaternion_PD_Controller
+	MAIN quaternion_pd_controller
 	COMPILE_FLAGS
 		${MAX_CUSTOM_OPT_LEVEL}
 	SRCS
-		quaternion_PD_Controller.cpp
-		quaternion_PD_Controller.hpp
+		quaternion_pd_controller.cpp
+		quaternion_pd_controller.hpp
 	DEPENDS
 		circuit_breaker
 		mathlib
