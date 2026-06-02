@@ -120,13 +120,13 @@ private:
 	float _Izz{0.02f};
 
 	// Backstepping gains (same names as in your ROS code)
-	float _Cd{0.0f};
-	float _Kv_r{8.0f};
-	float _Kv_p{8.0f};
-	float _Kv_y{8.0f};
-	float _Ka_r{8.0f};
-	float _Ka_p{8.0f};
-	float _Ka_y{8.0f};
+	// float _Cd{0.0f};
+	// float _Kv_r{0.0f};
+	// float _Kv_p{0.0f};
+	// float _Kv_y{0.0f};
+	// float _Ka_r{0.0f};
+	// float _Ka_p{0.0f};
+	// float _Ka_y{0.0f};
 	float _torque_scale{1.0};
 
 	DEFINE_PARAMETERS(

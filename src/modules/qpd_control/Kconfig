@@ -1,0 +1,10 @@
+menuconfig MODULES_QPD_CONTROL
+    bool "qpd_control"
+    default n
+    ---help---
+        Enable qpd_control
+
+menuconfig USER_qpd_control
+    bool "qpd_control running as userspace module"
+    default n
+    depends on BOARD_PROTECTED && MODULES_QPD_CONTROL

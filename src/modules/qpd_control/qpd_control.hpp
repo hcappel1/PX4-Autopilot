@@ -32,14 +32,14 @@ using namespace time_literals;
  * - Takes rate + body thrust setpoints via vehicle_rates_setpoint
  * - Outputs vehicle_torque_setpoint + vehicle_thrust_setpoint
  */
-class quaternion_pd_controller final :
-	public ModuleBase<quaternion_pd_controller>,
+class qpd_control final :
+	public ModuleBase<qpd_control>,
 	public ModuleParams,
 	public px4::WorkItem
 {
 public:
-	quaternion_pd_controller();
-	~quaternion_pd_controller() override;
+	qpd_control();
+	~qpd_control() override;
 
 	/** Initialize subscriptions and schedule */
 	bool init();
