@@ -123,36 +123,21 @@ private:
 	float _Cd{0.0f};
 	float _Kv_r{1.0f};
 	float _Kv_p{1.0f};
-	float _Kv_y{1.0f};
+	float _Kv_y{3.5f};
 	float _Ka_r{0.2f};
 	float _Ka_p{0.2f};
-	float _Ka_y{0.2f};
+	float _Ka_y{0.05f};
 	float _torque_scale{1.0};
 
-
-	// Temporary fix, define params for the quaternion PD controller. These should be tuned for the specific vehicle and ideally exposed as parameters.
-	// Quaternion PD gains 
-	float qpd_Roll_kP{1.0f};
-	float qpd_Pitch_kP{1.0f};
-	float qpd_Yaw_kP{1.0f};
-	float qpd_Roll_kD{0.2f};
-	float qpd_Pitch_kD{0.2f};
-	float qpd_Yaw_kD{0.2f};
-
-
 	DEFINE_PARAMETERS(
-		(ParamFloat<px4::params::BSA_ROLL_KV>) _param_bsa_roll_kv,
-		(ParamFloat<px4::params::BSA_ROLL_KA>) _param_bsa_roll_ka,
+		(ParamFloat<px4::params::QPD_ROLL_KP>) _param_qpd_roll_kp,
+		(ParamFloat<px4::params::QPD_ROLL_KV>) _param_qpd_roll_kv,
 
-		(ParamFloat<px4::params::BSA_PITCH_KV>) _param_bsa_pitch_kv,
-		(ParamFloat<px4::params::BSA_PITCH_KA>) _param_bsa_pitch_ka,
+		(ParamFloat<px4::params::QPD_PITCH_KP>) _param_qpd_pitch_kp,
+		(ParamFloat<px4::params::QPD_PITCH_KV>) _param_qpd_pitch_kv,
 
-		(ParamFloat<px4::params::BSA_YAW_KV>) _param_bsa_yaw_kv,
-		(ParamFloat<px4::params::BSA_YAW_KA>) _param_bsa_yaw_ka,
-
-		(ParamFloat<px4::params::BSA_IXX>) _param_bsa_ixx,
-		(ParamFloat<px4::params::BSA_IYY>) _param_bsa_iyy,
-		(ParamFloat<px4::params::BSA_IZZ>) _param_bsa_izz
+		(ParamFloat<px4::params::QPD_YAW_KP>) _param_qpd_yaw_kp,
+		(ParamFloat<px4::params::QPD_YAW_KV>) _param_qpd_yaw_kv,
 	)
 	
 };
