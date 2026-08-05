@@ -110,7 +110,7 @@ private:
 	bool _armed_prev{false};   // last seen arming state
 	float _yaw_sp{0.f};
 	float _yaw_rate_sp{0.f};
-	float _yaw_rate_scale{10.f};
+	float _yaw_rate_scale{1.f};
 	int iter{0};
 
     // Physical parameters
@@ -121,12 +121,12 @@ private:
 
 	// Quaternion PD gains 
 	float _Cd{0.0f};
-	float _Kv_r{1.0f};
-	float _Kv_p{1.0f};
-	float _Kv_y{3.5f};
-	float _Ka_r{0.2f};
-	float _Ka_p{0.2f};
-	float _Ka_y{0.05f};
+	float _Kp_r{1.0f};
+	float _Kp_p{1.0f};
+	float _Kp_y{0.5f};
+	float _Kv_r{0.2f};
+	float _Kv_p{0.2f};
+	float _Kv_y{0.05f};
 	float _torque_scale{1.0};
 
 	DEFINE_PARAMETERS(
@@ -137,7 +137,7 @@ private:
 		(ParamFloat<px4::params::QPD_PITCH_KV>) _param_qpd_pitch_kv,
 
 		(ParamFloat<px4::params::QPD_YAW_KP>) _param_qpd_yaw_kp,
-		(ParamFloat<px4::params::QPD_YAW_KV>) _param_qpd_yaw_kv,
+		(ParamFloat<px4::params::QPD_YAW_KV>) _param_qpd_yaw_kv
 	)
 	
 };

@@ -475,7 +475,7 @@ PARAM_DEFINE_FLOAT(BSA_IZZ, 0.02f);
  * @group Multicopter Rate Control
  */
 
- PARAM_DEFINE_FLOAT(QPD_YAW_KP, 3.5f);
+ PARAM_DEFINE_FLOAT(QPD_YAW_KP, 0.2f);
 
 /**
  * Quaternion Attitude Controller Roll Derivative Gain 
@@ -520,5 +520,5 @@ PARAM_DEFINE_FLOAT(BSA_IZZ, 0.02f);
  * @group Multicopter Rate Control
  */
 
- PARAM_DEFINE_FLOAT(QPD_YAW_KV, 0.05f);
+ PARAM_DEFINE_FLOAT(QPD_YAW_KV, 0.01f);
 
