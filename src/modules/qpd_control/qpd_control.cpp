@@ -234,15 +234,8 @@ void qpd_control::calcRollTorque() {
 
 	// Body rates omega = [omega1, omega2, omega3]
 	const float omega1 = _rates_body(0);
-	
-	const float t2 = qc0 * qc0;
-	const float t3 = qcv1 * qcv1;
-	const float t4 = qcv2 * qcv2;
-	const float t5 = qcv3 * qcv3;
-	const float t6 = t2 + t3 + t4 + t5;
-	const float t7 = 1.0f / t6;
 
-	_torque_sp(0) = k1*q0*qcv1*t7 - k1*qc0*qv1*t7 - k1*qcv2*qv3*t7 + k1*qcv3*qv2*t7 - k2*omega1;
+	_torque_sp(0) = k1*q0*qcv1 - k1*qc0*qv1 + k1*qcv2*qv3 - k1*qcv3*qv2 - k2*omega1;
 }
 
 void qpd_control::calcPitchTorque() {
@@ -268,18 +261,8 @@ void qpd_control::calcPitchTorque() {
 	const float qcv3 = _q_att_sp(3);
 
 	// Body rates omega = [omega1, omega2, omega3]
-	//const float omega1 = _rates_body(0);
 	const float omega2 = _rates_body(1);
-	// float omega3 = _rates_body(2);
-
-	const float t2 = qc0 * qc0;
-	const float t3 = qcv1 * qcv1;
-	const float t4 = qcv2 * qcv2;
-	const float t5 = qcv3 * qcv3;
-	const float t6 = t2 + t3 + t4 + t5;
-	const float t7 = 1.0f / t6;
-
-	_torque_sp(1) = -1.f * (k1*q0*qcv2*t7 - k1*qc0*qv2*t7 + k1*qcv1*qv3*t7 - k1*qcv3*qv1*t7 - k2*omega2);
+	_torque_sp(1) = 1.f * (k1*q0*qcv2 - k1*qc0*qv2 - k1*qcv1*qv3 + k1*qcv3*qv1 - k2*omega2);
 }
 
 void qpd_control::calcYawTorque() {
@@ -303,18 +286,8 @@ void qpd_control::calcYawTorque() {
 	const float qcv3 = _q_att_sp(3);
 
 	// Body rates omega = [omega1, omega2, omega3]
-	//const float omega1 = _rates_body(0);
-	// float omega2 = _rates_body(1);
 	const float omega3 = _rates_body(2);
-
-	const float t2 = qc0 * qc0;
-	const float t3 = qcv1 * qcv1;
-	const float t4 = qcv2 * qcv2;
-	const float t5 = qcv3 * qcv3;
-	const float t6 = t2 + t3 + t4 + t5;
-	const float t7 = 1.0f / t6;
-
-	_torque_sp(2) = -1.f * (k1*q0*qcv3*t7 - k1*qc0*qv3*t7 - k1*qcv1*qv2*t7 + k1*qcv2*qv1*t7 - k2*omega3);
+	_torque_sp(2) = 1.f * (k1*q0*qcv3 - k1*qc0*qv3 + k1*qcv1*qv2 - k1*qcv2*qv1 - k2*omega3);
 }
 
 void qpd_control::updateYawRateSp() {
