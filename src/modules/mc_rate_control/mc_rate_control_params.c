@@ -433,7 +433,7 @@ PARAM_DEFINE_FLOAT(BSA_IYY, 0.02f);
 PARAM_DEFINE_FLOAT(BSA_IZZ, 0.02f);
 
 /**
- * Quaternion Attitude Controller Roll Proportional Gain 
+ * Quaternion Attitude Controller Roll Proportional Gain
  *
  * Tune +/- 5 starting at 10
  * 0 disables the filter
@@ -448,7 +448,7 @@ PARAM_DEFINE_FLOAT(BSA_IZZ, 0.02f);
  PARAM_DEFINE_FLOAT(QPD_ROLL_KP, 1.0f);
 
 /**
- * Quaternion Attitude Controller Pitch Proportional Gain 
+ * Quaternion Attitude Controller Pitch Proportional Gain
  *
  * Tune +/- 5 starting at 10
  * 0 disables the filter
@@ -463,7 +463,7 @@ PARAM_DEFINE_FLOAT(BSA_IZZ, 0.02f);
  PARAM_DEFINE_FLOAT(QPD_PITCH_KP, 1.0f);
 
 /**
- * Quaternion Attitude Controller Yaw Proportional Gain 
+ * Quaternion Attitude Controller Yaw Proportional Gain
  *
  * Tune +/- 5 starting at 10
  * 0 disables the filter
@@ -478,7 +478,7 @@ PARAM_DEFINE_FLOAT(BSA_IZZ, 0.02f);
  PARAM_DEFINE_FLOAT(QPD_YAW_KP, 0.2f);
 
 /**
- * Quaternion Attitude Controller Roll Derivative Gain 
+ * Quaternion Attitude Controller Roll Derivative Gain
  *
  * Tune +/- 5 starting at 10
  * 0 disables the filter
@@ -493,7 +493,7 @@ PARAM_DEFINE_FLOAT(BSA_IZZ, 0.02f);
  PARAM_DEFINE_FLOAT(QPD_ROLL_KV, 0.2f);
 
 /**
- * Quaternion Attitude Controller Pitch Derivative Gain 
+ * Quaternion Attitude Controller Pitch Derivative Gain
  *
  * Tune +/- 5 starting at 10
  * 0 disables the filter
@@ -508,7 +508,7 @@ PARAM_DEFINE_FLOAT(BSA_IZZ, 0.02f);
  PARAM_DEFINE_FLOAT(QPD_PITCH_KV, 0.2f);
 
 /**
- * Quaternion Attitude Controller Yaw Derivative Gain 
+ * Quaternion Attitude Controller Yaw Derivative Gain
  *
  * Tune +/- 5 starting at 10
  * 0 disables the filter
@@ -521,4 +521,19 @@ PARAM_DEFINE_FLOAT(BSA_IZZ, 0.02f);
  */
 
  PARAM_DEFINE_FLOAT(QPD_YAW_KV, 0.01f);
+
+ /**
+ * Quaternion Attitude Controller Yaw Scale Parameter
+ *
+ * Tune +/- 5 starting at 10
+ * 0 disables the filter
+ *
+ * @min 0
+ * @max 10
+ * @unit Hz
+ * @decimal 3
+ * @group Multicopter Rate Control
+ */
+
+ PARAM_DEFINE_FLOAT(QPD_YAW_RATE_SCL, 0.01f);
 

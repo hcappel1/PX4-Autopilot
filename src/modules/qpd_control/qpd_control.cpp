@@ -34,7 +34,7 @@ bool qpd_control::init()
 }
 
 void qpd_control::parameters_updated() {
-
+	// Get the Controller gains
 	_Kp_r = _param_qpd_roll_kp.get();
 	_Kp_p = _param_qpd_pitch_kp.get();
 	_Kp_y = _param_qpd_yaw_kp.get();
@@ -43,6 +43,8 @@ void qpd_control::parameters_updated() {
 	_Kv_p = _param_qpd_pitch_kv.get();
 	_Kv_y = _param_qpd_yaw_kv.get();
 
+	// Now get the yaw scale
+	_yaw_rate_scale = _param_qpd_yaw_rate_scale.get();
 }
 
 void qpd_control::resetYawInit(uint64_t now)
@@ -128,13 +130,16 @@ void qpd_control::Run()
 	if (_attitude_sub.updated()) {
 		_attitude_sub.copy(&_attitude);
 
-		// Get the Quaternion from the attitude message
+		// Get the Current quaternion from the attitude message
 		_q_att = matrix::Quatf(_attitude.q[0],
 			       _attitude.q[1],
 			       _attitude.q[2],
 			       _attitude.q[3]);
 		// Get the DCM from the Quaternion
 		_R_att = matrix::Dcmf(_q_att);
+
+		// Get the current roll, pitch, yaw from the quaternion
+		_rpy_current = matrix::Eulerf(_q_att);
 	}
 
 	if (_attitude_setpoint_sub.updated()) {
@@ -148,50 +153,30 @@ void qpd_control::Run()
 		matrix::Eulerf rpy(q_rp);
 
 		if(!_yaw_initialized) {
-			float t_from_start = (now - _first_run)*1e-6;
-			float yaw_abs = fabs(rpy(2));
-			if(yaw_abs > 0.f && t_from_start > 3.f) {
-				_yaw_initialized = true;
-			}
-
-			_q_att_sp = matrix::Quatf(matrix::Eulerf(rpy(0), rpy(1), rpy(2)));
-			_q_att_sp.normalize();
-			_yaw_sp = rpy(2);
-		} else {
-			_q_att_sp = matrix::Quatf(matrix::Eulerf(rpy(0), rpy(1), _yaw_sp));
-			_q_att_sp.normalize();
-		}
-
-		if(_constrain_yaw) {
-			_q_att_sp = matrix::Quatf(matrix::Eulerf(rpy(0), rpy(1), rpy(2)));
-			_q_att_sp.normalize();
-		}
-
+			_yaw_sp = _rpy_current(2);
+			_yaw_initialized = true;			
+		} 
+		// Now fix the Yaw Setpoint
+		_q_att_sp = matrix::Quatf(matrix::Eulerf(rpy(0), rpy(1), _yaw_sp));
+		_q_att_sp.normalize();
+		
 		_thrust_sp(2) = _attitude_sp.thrust_body[2];
-
-		// DEBUG
-		// matrix::Eulerf rpy2(_q_att_sp);
-
-		// PX4_INFO("att_sp RPY [rad]: roll=%.3f pitch=%.3f yaw=%.3f",
-		// 			(double)rpy2(0),
-		// 			(double)rpy2(1),
-		// 			(double)rpy2(2));
 	}
 
 	// Manual control input
 	if (_manual_control_sub.updated()) {
 		_manual_control_sub.copy(&_manual_control);
-		updateYawRateSp();
-		integrateYawSp(dt);
+		// updateYawRateSp();
+		// integrateYawSp(dt);
 	}
 
-    calcRollTorque();
-    calcPitchTorque();
-    calcYawTorque();
+    	calcRollTorque();
+    	calcPitchTorque();
+    	calcYawTorque();
 
 	_torque_sp *= _torque_scale;
 
-    // Publish torque setpoint
+    	// Publish torque setpoint
 	vehicle_torque_setpoint_s torque_msg{};
 	torque_msg.timestamp_sample = angular_velocity.timestamp_sample;
 	torque_msg.timestamp = hrt_absolute_time();
@@ -206,8 +191,8 @@ void qpd_control::Run()
 	vehicle_thrust_setpoint_s thrust_msg{};
 	thrust_msg.timestamp_sample = angular_velocity.timestamp_sample;
 	thrust_msg.timestamp = hrt_absolute_time();
-    
-    thrust_msg.xyz[0] = PX4_ISFINITE(_thrust_sp(0)) ? _thrust_sp(0) : 0.f;
+
+    	thrust_msg.xyz[0] = PX4_ISFINITE(_thrust_sp(0)) ? _thrust_sp(0) : 0.f;
 	thrust_msg.xyz[1] = PX4_ISFINITE(_thrust_sp(1)) ? _thrust_sp(1) : 0.f;
 	thrust_msg.xyz[2] = PX4_ISFINITE(_thrust_sp(2)) ? _thrust_sp(2) : 0.f;
 
@@ -216,7 +201,7 @@ void qpd_control::Run()
 
 void qpd_control::calcRollTorque() {
 	// Roll channel P and D gains (k1, k2)
-	
+
 	const float k1 = _Kp_r;
 	const float k2 = _Kv_r;
 
@@ -290,14 +275,15 @@ void qpd_control::calcYawTorque() {
 	_torque_sp(2) = 1.f * (k1*q0*qcv3 - k1*qc0*qv3 + k1*qcv1*qv2 - k1*qcv2*qv1 - k2*omega3);
 }
 
-void qpd_control::updateYawRateSp() {
-	// _yaw_rate_sp = 0.f;
-	_yaw_rate_sp = _yaw_rate_scale * _manual_control.yaw;
-}
+// void qpd_control::updateYawRateSp() {
+// 	_yaw_rate_sp = _yaw_rate_scale * _manual_control.yaw;
+// }
 
-void qpd_control::integrateYawSp(float& dt) {
-	_yaw_sp += _yaw_rate_sp * dt;
-}
+// void qpd_control::integrateYawSp(float& dt) {
+// 	// _yaw_sp += _yaw_rate_sp * dt;
+// 	_yaw_sp = rpy_current(2);
+	
+// }
 
 /** ModuleBase interface **/
 

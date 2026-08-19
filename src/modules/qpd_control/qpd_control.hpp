@@ -85,15 +85,16 @@ private:
 	manual_control_setpoint_s   _manual_control{};
 	vehicle_local_position_s    _local_position{};
 	vehicle_attitude_s          _attitude{};
-    vehicle_attitude_setpoint_s _attitude_sp{};
+    	vehicle_attitude_setpoint_s _attitude_sp{};
 	vehicle_angular_velocity_s  _angular_velocity{};
 	vehicle_status_s 			_vehicle_status{};
 
-	// Controller I/O 
+	// Controller I/O
 	matrix::Vector3f _vel_est_ned{0.f, 0.f, 0.f};
 	matrix::Vector3f _vel_est_body{0.f, 0.f, 0.f};
+	matrix::Eulerf   _rpy_current{};
 	matrix::Quatf    _q_att{1.f, 0.f, 0.f, 0.f};
-    matrix::Quatf    _q_att_sp{1.f, 0.f, 0.f, 0.f};
+    	matrix::Quatf    _q_att_sp{1.f, 0.f, 0.f, 0.f};
 	matrix::Vector3f _rates_body{0.f, 0.f, 0.f};
 	matrix::Dcmf     _R_att{matrix::eye<float, 3>()};
 
@@ -105,12 +106,10 @@ private:
 	uint64_t _first_run{0};
 
 	// Yaw adjustment params
-	bool _constrain_yaw{false};
 	bool _yaw_initialized{false};
 	bool _armed_prev{false};   // last seen arming state
 	float _yaw_sp{0.f};
 	float _yaw_rate_sp{0.f};
-	float _yaw_rate_scale{1.f};
 	int iter{0};
 
     // Physical parameters
@@ -119,8 +118,7 @@ private:
 	float _Iyy{0.02f};
 	float _Izz{0.02f};
 
-	// Quaternion PD gains 
-	float _Cd{0.0f};
+	// Quaternion PD gains
 	float _Kp_r{1.0f};
 	float _Kp_p{1.0f};
 	float _Kp_y{0.5f};
@@ -128,6 +126,7 @@ private:
 	float _Kv_p{0.2f};
 	float _Kv_y{0.05f};
 	float _torque_scale{1.0};
+	float _yaw_rate_scale{0.01f};
 
 	DEFINE_PARAMETERS(
 		(ParamFloat<px4::params::QPD_ROLL_KP>) _param_qpd_roll_kp,
@@ -137,7 +136,8 @@ private:
 		(ParamFloat<px4::params::QPD_PITCH_KV>) _param_qpd_pitch_kv,
 
 		(ParamFloat<px4::params::QPD_YAW_KP>) _param_qpd_yaw_kp,
-		(ParamFloat<px4::params::QPD_YAW_KV>) _param_qpd_yaw_kv
+		(ParamFloat<px4::params::QPD_YAW_KV>) _param_qpd_yaw_kv,
+		(ParamFloat<px4::params::QPD_YAW_RATE_SCL>) _param_qpd_yaw_rate_scale
 	)
-	
+
 };

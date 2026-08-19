@@ -176,6 +176,17 @@ private:
 
 		(ParamFloat<px4::params::BSA_IXX>) _param_bsa_ixx,
 		(ParamFloat<px4::params::BSA_IYY>) _param_bsa_iyy,
-		(ParamFloat<px4::params::BSA_IZZ>) _param_bsa_izz
+		(ParamFloat<px4::params::BSA_IZZ>) _param_bsa_izz,
+
+		// Quaternion PD gains
+		(ParamFloat<px4::params::QPD_ROLL_KP>) _param_qpd_roll_kp,
+		(ParamFloat<px4::params::QPD_ROLL_KV>) _param_qpd_roll_kv,
+
+		(ParamFloat<px4::params::QPD_PITCH_KP>) _param_qpd_pitch_kp,
+		(ParamFloat<px4::params::QPD_PITCH_KV>) _param_qpd_pitch_kv,
+
+		(ParamFloat<px4::params::QPD_YAW_KP>) _param_qpd_yaw_kp,
+		(ParamFloat<px4::params::QPD_YAW_KV>) _param_qpd_yaw_kv,
+		(ParamFloat<px4::params::QPD_YAW_RATE_SCL>) _param_qpd_yaw_rate_scale
 	)
 };
