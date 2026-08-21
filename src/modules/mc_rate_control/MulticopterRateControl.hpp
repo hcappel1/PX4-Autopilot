@@ -187,6 +187,7 @@ private:
 
 		(ParamFloat<px4::params::QPD_YAW_KP>) _param_qpd_yaw_kp,
 		(ParamFloat<px4::params::QPD_YAW_KV>) _param_qpd_yaw_kv,
-		(ParamFloat<px4::params::QPD_YAW_RATE_SCL>) _param_qpd_yaw_rate_scale
+		(ParamFloat<px4::params::QPD_YAW_RATE_SCL>) _param_qpd_yaw_rate_scale,
+		(ParamBool<px4::params::QPD_YAW_CONST>) _param_qpd_yaw_const
 	)
 };
