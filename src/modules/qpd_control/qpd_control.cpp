@@ -43,7 +43,8 @@ void qpd_control::parameters_updated() {
 	_Kv_p = _param_qpd_pitch_kv.get();
 	_Kv_y = _param_qpd_yaw_kv.get();
 
-	// Now get the yaw scale
+	// Now get the yaw scale and yaw constrain params
+	_yaw_constrain = _param_qpd_yaw_const.get();
 	_yaw_rate_scale = _param_qpd_yaw_rate_scale.get();
 }
 
@@ -152,14 +153,28 @@ void qpd_control::Run()
 
 		matrix::Eulerf rpy(q_rp);
 
-		if(!_yaw_initialized) {
+		if(!_yaw_initialized && _yaw_constrain) {
 			_yaw_sp = _rpy_current(2);
-			_yaw_initialized = true;			
-		} 
-		// Now fix the Yaw Setpoint
+			_yaw_initialized = true;
+		}
+		else if (!_yaw_constrain) {
+			_yaw_sp = rpy(2);
+		}
+		// Now update the attitude setpoint quaternion with the new yaw_sp
 		_q_att_sp = matrix::Quatf(matrix::Eulerf(rpy(0), rpy(1), _yaw_sp));
 		_q_att_sp.normalize();
-		
+
+		// Overwrite q_d with the attitude actually used by QPD
+		_attitude_sp.q_d[0] = _q_att_sp(0);
+		_attitude_sp.q_d[1] = _q_att_sp(1);
+		_attitude_sp.q_d[2] = _q_att_sp(2);
+		_attitude_sp.q_d[3] = _q_att_sp(3);
+
+    		_attitude_sp.timestamp = hrt_absolute_time();
+
+    		// Publish modified attitude setpoint
+    		_attitude_sp_pub.publish(_attitude_sp);
+
 		_thrust_sp(2) = _attitude_sp.thrust_body[2];
 	}
 
@@ -282,7 +297,7 @@ void qpd_control::calcYawTorque() {
 // void qpd_control::integrateYawSp(float& dt) {
 // 	// _yaw_sp += _yaw_rate_sp * dt;
 // 	_yaw_sp = rpy_current(2);
-	
+
 // }
 
 /** ModuleBase interface **/

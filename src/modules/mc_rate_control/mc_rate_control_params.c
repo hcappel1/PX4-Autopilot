@@ -537,3 +537,14 @@ PARAM_DEFINE_FLOAT(BSA_IZZ, 0.02f);
 
  PARAM_DEFINE_FLOAT(QPD_YAW_RATE_SCL, 0.01f);
 
+  /**
+ * Yaw Constrain Parameter for the Quaternion PD Attitude Controller
+ * Enbale param to constrain the yaw setpoint to the inital yaw when the vehicle is armed.
+ *
+ * @boolean
+ * @group Multicopter Rate Control
+ */
+ PARAM_DEFINE_FLOAT(QPD_YAW_CONST, 0);
+
+
+

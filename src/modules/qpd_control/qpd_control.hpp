@@ -68,6 +68,7 @@ private:
 	// uORB publications
 	uORB::Publication<vehicle_torque_setpoint_s> _torque_sp_pub{ORB_ID(vehicle_torque_setpoint)};
 	uORB::Publication<vehicle_thrust_setpoint_s> _thrust_sp_pub{ORB_ID(vehicle_thrust_setpoint)};
+	uORB::Publication<vehicle_attitude_setpoint_s> _attitude_sp_pub{ORB_ID(vehicle_attitude_setpoint)};
 
     // Methods
     void calcRollTorque();
@@ -107,6 +108,7 @@ private:
 
 	// Yaw adjustment params
 	bool _yaw_initialized{false};
+	bool _yaw_constrain{false};
 	bool _armed_prev{false};   // last seen arming state
 	float _yaw_sp{0.f};
 	float _yaw_rate_sp{0.f};
@@ -137,7 +139,8 @@ private:
 
 		(ParamFloat<px4::params::QPD_YAW_KP>) _param_qpd_yaw_kp,
 		(ParamFloat<px4::params::QPD_YAW_KV>) _param_qpd_yaw_kv,
-		(ParamFloat<px4::params::QPD_YAW_RATE_SCL>) _param_qpd_yaw_rate_scale
+		(ParamFloat<px4::params::QPD_YAW_RATE_SCL>) _param_qpd_yaw_rate_scale,
+		(ParamFloat<px4::params::QPD_YAW_CONST>) _param_qpd_yaw_const
 	)
 
 };
