@@ -18,6 +18,7 @@
 #include <uORB/topics/vehicle_torque_setpoint.h>
 #include <uORB/topics/vehicle_thrust_setpoint.h>
 #include <uORB/topics/parameter_update.h>
+#include <uORB/topics/qpd_control_status.h>
 
 
 #include <matrix/matrix/math.hpp>
@@ -54,11 +55,11 @@ public:
 
 private:
 
-    uORB::Subscription _control_mode_sub{ORB_ID(vehicle_control_mode)};
+    	uORB::Subscription _control_mode_sub{ORB_ID(vehicle_control_mode)};
 	uORB::Subscription _manual_control_sub{ORB_ID(manual_control_setpoint)};
 	uORB::Subscription _local_position_sub{ORB_ID(vehicle_local_position)};
 	uORB::Subscription _attitude_sub{ORB_ID(vehicle_attitude)};
-    uORB::Subscription _attitude_setpoint_sub{ORB_ID(vehicle_attitude_setpoint)};
+    	uORB::Subscription _attitude_setpoint_sub{ORB_ID(vehicle_attitude_setpoint)};
 	uORB::Subscription _vehicle_status_sub{ORB_ID(vehicle_status)};
 
 	uORB::SubscriptionCallbackWorkItem _angular_velocity_sub{this, ORB_ID(vehicle_angular_velocity)};
@@ -69,6 +70,7 @@ private:
 	uORB::Publication<vehicle_torque_setpoint_s> _torque_sp_pub{ORB_ID(vehicle_torque_setpoint)};
 	uORB::Publication<vehicle_thrust_setpoint_s> _thrust_sp_pub{ORB_ID(vehicle_thrust_setpoint)};
 	uORB::Publication<vehicle_attitude_setpoint_s> _attitude_sp_pub{ORB_ID(vehicle_attitude_setpoint)};
+	uORB::Publication<qpd_control_status_s> _qpd_status_pub{ORB_ID(qpd_control_status)};
 
     // Methods
     void calcRollTorque();
@@ -94,6 +96,7 @@ private:
 	matrix::Vector3f _vel_est_ned{0.f, 0.f, 0.f};
 	matrix::Vector3f _vel_est_body{0.f, 0.f, 0.f};
 	matrix::Eulerf   _rpy_current{};
+	matrix::Eulerf  _rpy_sp{};
 	matrix::Quatf    _q_att{1.f, 0.f, 0.f, 0.f};
     	matrix::Quatf    _q_att_sp{1.f, 0.f, 0.f, 0.f};
 	matrix::Vector3f _rates_body{0.f, 0.f, 0.f};
@@ -107,9 +110,10 @@ private:
 	uint64_t _first_run{0};
 
 	// Yaw adjustment params
+	float _input_yaw_sp{0.f};
 	bool _yaw_initialized{false};
 	bool _yaw_constrain{false};
-	bool _armed_prev{false};   // last seen arming state
+	bool _armed_prev{false};   // last seen arming states
 	float _yaw_sp{0.f};
 	float _yaw_rate_sp{0.f};
 	int iter{0};
@@ -128,7 +132,7 @@ private:
 	float _Kv_p{0.2f};
 	float _Kv_y{0.05f};
 	float _torque_scale{1.0};
-	float _yaw_rate_scale{0.01f};
+	float _yaw_rate_scale{1.0f};
 
 	DEFINE_PARAMETERS(
 		(ParamFloat<px4::params::QPD_ROLL_KP>) _param_qpd_roll_kp,

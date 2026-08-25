@@ -151,17 +151,23 @@ void qpd_control::Run()
 								_attitude_sp.q_d[2],
 								_attitude_sp.q_d[3]);
 
-		matrix::Eulerf rpy(q_rp);
+		_rpy_sp = matrix::Eulerf(q_rp);
+		_input_yaw_sp = _rpy_sp(2); // Record the input yaw setpoint for debugging purposes
 
-		if(!_yaw_initialized && _yaw_constrain) {
+    		_yaw_rate_sp = _attitude_sp.yaw_sp_move_rate; // Get the commanded yaw rate setpoint from the attitude setpoint message
+
+		if(!_yaw_initialized) {
 			_yaw_sp = _rpy_current(2);
+			_q_att_sp = matrix::Quatf(matrix::Eulerf(_rpy_sp(0), _rpy_sp(1), _yaw_sp));
 			_yaw_initialized = true;
 		}
-		else if (!_yaw_constrain) {
-			_yaw_sp = rpy(2);
+
+		if (!_yaw_constrain) {
+    			updateYawRateSp();
+			integrateYawSp(dt);
+			_q_att_sp = matrix::Quatf(matrix::Eulerf(_rpy_sp(0), _rpy_sp(1), _yaw_sp));
 		}
 		// Now update the attitude setpoint quaternion with the new yaw_sp
-		_q_att_sp = matrix::Quatf(matrix::Eulerf(rpy(0), rpy(1), _yaw_sp));
 		_q_att_sp.normalize();
 
 		// Overwrite q_d with the attitude actually used by QPD
@@ -212,6 +218,39 @@ void qpd_control::Run()
 	thrust_msg.xyz[2] = PX4_ISFINITE(_thrust_sp(2)) ? _thrust_sp(2) : 0.f;
 
 	_thrust_sp_pub.publish(thrust_msg);
+
+	// Publish QPD Yaw Parameters for Debugging Purposes
+	qpd_control_status_s qpd_status{};
+
+	qpd_status.timestamp = hrt_absolute_time();
+
+	// Publish the roll, pitch, and yaw from the vehicle attitude quaternion
+	qpd_status.roll = _rpy_current(0);
+	qpd_status.pitch = _rpy_current(1);
+	qpd_status.yaw = _rpy_current(2);
+
+	// Publish the roll, pitch, and yaw setpoints from the vehicle attitude setpoint quaternion
+	qpd_status.roll_sp = _rpy_sp(0);
+	qpd_status.pitch_sp = _rpy_sp(1);
+	qpd_status.yaw_sp = _yaw_sp;
+
+	// Publish the roll, pitch, and yaw rates from the vehicle angular velocity
+	qpd_status.roll_rate = _rates_body(0);
+	qpd_status.pitch_rate = _rates_body(1);
+	qpd_status.yaw_rate = _rates_body(2);
+
+	// Publish the roll, pitch, and yaw torques from the vehicle torque setpoint
+	qpd_status.roll_torque = _torque_sp(0);
+	qpd_status.pitch_torque = _torque_sp(1);
+	qpd_status.yaw_torque = _torque_sp(2);
+
+	// Useful yaw debugging parameters for the QPD controller
+	qpd_status.input_yaw_sp = _input_yaw_sp;
+	qpd_status.yaw_rate_sp = _yaw_rate_sp;
+	qpd_status.yaw_constrain = _yaw_constrain;
+	qpd_status.yaw_initialized = _yaw_initialized;
+
+	_qpd_status_pub.publish(qpd_status);
 }
 
 void qpd_control::calcRollTorque() {
@@ -290,15 +329,13 @@ void qpd_control::calcYawTorque() {
 	_torque_sp(2) = 1.f * (k1*q0*qcv3 - k1*qc0*qv3 + k1*qcv1*qv2 - k1*qcv2*qv1 - k2*omega3);
 }
 
-// void qpd_control::updateYawRateSp() {
-// 	_yaw_rate_sp = _yaw_rate_scale * _manual_control.yaw;
-// }
+void qpd_control::updateYawRateSp() {
+	_yaw_rate_sp = _yaw_rate_scale * _manual_control.yaw;
+}
 
-// void qpd_control::integrateYawSp(float& dt) {
-// 	// _yaw_sp += _yaw_rate_sp * dt;
-// 	_yaw_sp = rpy_current(2);
-
-// }
+void qpd_control::integrateYawSp(float& dt) {
+	_yaw_sp += _yaw_rate_sp * dt;
+}
 
 /** ModuleBase interface **/
 

@@ -432,120 +432,120 @@ PARAM_DEFINE_FLOAT(BSA_IYY, 0.02f);
  */
 PARAM_DEFINE_FLOAT(BSA_IZZ, 0.02f);
 
-/**
- * Quaternion Attitude Controller Roll Proportional Gain
- *
- * Tune +/- 5 starting at 10
- * 0 disables the filter
- *
- * @min 0
- * @max 100
- * @unit Hz
- * @decimal 3
- * @group Multicopter Rate Control
- */
+// /**
+//  * Quaternion Attitude Controller Roll Proportional Gain
+//  *
+//  * Tune +/- 5 starting at 10
+//  * 0 disables the filter
+//  *
+//  * @min 0
+//  * @max 100
+//  * @unit Hz
+//  * @decimal 3
+//  * @group Multicopter Rate Control
+//  */
 
- PARAM_DEFINE_FLOAT(QPD_ROLL_KP, 1.0f);
+//  PARAM_DEFINE_FLOAT(QPD_ROLL_KP, 1.0f);
 
-/**
- * Quaternion Attitude Controller Pitch Proportional Gain
- *
- * Tune +/- 5 starting at 10
- * 0 disables the filter
- *
- * @min 0
- * @max 100
- * @unit Hz
- * @decimal 3
- * @group Multicopter Rate Control
- */
+// /**
+//  * Quaternion Attitude Controller Pitch Proportional Gain
+//  *
+//  * Tune +/- 5 starting at 10
+//  * 0 disables the filter
+//  *
+//  * @min 0
+//  * @max 100
+//  * @unit Hz
+//  * @decimal 3
+//  * @group Multicopter Rate Control
+//  */
 
- PARAM_DEFINE_FLOAT(QPD_PITCH_KP, 1.0f);
+//  PARAM_DEFINE_FLOAT(QPD_PITCH_KP, 1.0f);
 
-/**
- * Quaternion Attitude Controller Yaw Proportional Gain
- *
- * Tune +/- 5 starting at 10
- * 0 disables the filter
- *
- * @min 0
- * @max 100
- * @unit Hz
- * @decimal 3
- * @group Multicopter Rate Control
- */
+// /**
+//  * Quaternion Attitude Controller Yaw Proportional Gain
+//  *
+//  * Tune +/- 5 starting at 10
+//  * 0 disables the filter
+//  *
+//  * @min 0
+//  * @max 100
+//  * @unit Hz
+//  * @decimal 3
+//  * @group Multicopter Rate Control
+//  */
 
- PARAM_DEFINE_FLOAT(QPD_YAW_KP, 0.2f);
+//  PARAM_DEFINE_FLOAT(QPD_YAW_KP, 0.2f);
 
-/**
- * Quaternion Attitude Controller Roll Derivative Gain
- *
- * Tune +/- 5 starting at 10
- * 0 disables the filter
- *
- * @min 0
- * @max 100
- * @unit Hz
- * @decimal 3
- * @group Multicopter Rate Control
- */
+// /**
+//  * Quaternion Attitude Controller Roll Derivative Gain
+//  *
+//  * Tune +/- 5 starting at 10
+//  * 0 disables the filter
+//  *
+//  * @min 0
+//  * @max 100
+//  * @unit Hz
+//  * @decimal 3
+//  * @group Multicopter Rate Control
+//  */
 
- PARAM_DEFINE_FLOAT(QPD_ROLL_KV, 0.2f);
+//  PARAM_DEFINE_FLOAT(QPD_ROLL_KV, 0.2f);
 
-/**
- * Quaternion Attitude Controller Pitch Derivative Gain
- *
- * Tune +/- 5 starting at 10
- * 0 disables the filter
- *
- * @min 0
- * @max 100
- * @unit Hz
- * @decimal 3
- * @group Multicopter Rate Control
- */
+// /**
+//  * Quaternion Attitude Controller Pitch Derivative Gain
+//  *
+//  * Tune +/- 5 starting at 10
+//  * 0 disables the filter
+//  *
+//  * @min 0
+//  * @max 100
+//  * @unit Hz
+//  * @decimal 3
+//  * @group Multicopter Rate Control
+//  */
 
- PARAM_DEFINE_FLOAT(QPD_PITCH_KV, 0.2f);
+//  PARAM_DEFINE_FLOAT(QPD_PITCH_KV, 0.2f);
 
-/**
- * Quaternion Attitude Controller Yaw Derivative Gain
- *
- * Tune +/- 5 starting at 10
- * 0 disables the filter
- *
- * @min 0
- * @max 100
- * @unit Hz
- * @decimal 3
- * @group Multicopter Rate Control
- */
+// /**
+//  * Quaternion Attitude Controller Yaw Derivative Gain
+//  *
+//  * Tune +/- 5 starting at 10
+//  * 0 disables the filter
+//  *
+//  * @min 0
+//  * @max 100
+//  * @unit Hz
+//  * @decimal 3
+//  * @group Multicopter Rate Control
+//  */
 
- PARAM_DEFINE_FLOAT(QPD_YAW_KV, 0.01f);
+//  PARAM_DEFINE_FLOAT(QPD_YAW_KV, 0.01f);
 
- /**
- * Quaternion Attitude Controller Yaw Scale Parameter
- *
- * Tune +/- 5 starting at 10
- * 0 disables the filter
- *
- * @min 0
- * @max 10
- * @unit Hz
- * @decimal 3
- * @group Multicopter Rate Control
- */
+//  /**
+//  * Quaternion Attitude Controller Yaw Scale Parameter
+//  *
+//  * Tune +/- 5 starting at 10
+//  * 0 disables the filter
+//  *
+//  * @min 0
+//  * @max 10
+//  * @unit Hz
+//  * @decimal 3
+//  * @group Multicopter Rate Control
+//  */
 
- PARAM_DEFINE_FLOAT(QPD_YAW_RATE_SCL, 0.01f);
+//  PARAM_DEFINE_FLOAT(QPD_YAW_RATE_SCL, 0.01f);
 
-  /**
- * Yaw Constrain Parameter for the Quaternion PD Attitude Controller.
- *
- * Enbale param to constrain the yaw setpoint to the inital yaw when the vehicle is armed.
- *
- * @boolean
- * @group Multicopter Rate Control
- */
- PARAM_DEFINE_INT32(QPD_YAW_CONST, 0);
+//   /**
+//  * Yaw Constrain Parameter for the Quaternion PD Attitude Controller.
+//  *
+//  * Enbale param to constrain the yaw setpoint to the inital yaw when the vehicle is armed.
+//  *
+//  * @boolean
+//  * @group Multicopter Rate Control
+//  */
+//  PARAM_DEFINE_INT32(QPD_YAW_CONST, 0);
 
 
 
